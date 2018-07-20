@@ -5,6 +5,55 @@ $DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
 $BinTest = Join-Path $DirBuild -ChildPath 'Test.exe'
 $BinScript = Join-Path $DirRoot -ChildPath 'thinapp-inject.ps1'
 
+# https://pubs.vmware.com/thinapp-5/topic/com.vmware.thinapp50.userguide.doc/processing_systemroot.html
+$Macros = @{
+    '%AdminTools%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs\Administrative Tools'
+    '%AppData%' = 'C:\Documents and Settings\<user_name>\Application Data'
+    '%CDBurn Area%' = 'C:\Documents and Settings\<user_name>\Local Settings\Application Data\Microsoft\CD Burning'
+    '%Common AdminTools%' = 'C:\Documents and Settings\All Users\Start Menu\Programs\Administrative Tools'
+    '%Common AppData%' = 'C:\Documents and Settings\All Users\Application Data'
+    '%Common Desktop%' = 'C:\Documents and Settings\All Users\Desktop'
+    '%Common Documents%' = 'C:\Documents and Settings\All Users\Documents'
+    '%Common Favorites%' = 'C:\Documents and Settings\All Users\Favorites'
+    '%Common Programs%' = 'C:\Documents and Settings\All Users\Start Menu\Programs'
+    '%Common StartMenu%' = 'C:\Documents and Settings\All Users\Start Menu'
+    '%Common Startup%' = 'C:\Documents and Settings\All Users\Start Menu\Programs\Startup'
+    '%Common Templates%' = 'C:\Documents and Settings\All Users\Templates'
+    '%Cookies%' = 'C:\Documents and Settings\<user_name>\Cookies'
+    '%Desktop%' = 'C:\Documents and Settings\<user_name>\Desktop'
+    # Drive prefixes omitted, see Get-DrivePrefix
+    '%Favorites%' = 'C:\Documents and Settings\<user_name>\Favorites'
+    '%Fonts%' = 'C:\Windows\Fonts'
+    '%History%' = 'C:\Documents and Settings\<user_name>\Local Settings\History'
+    '%Internet Cache%' = 'C:\Documents and Settings\<user_name>\Local Settings\Temporary Internet Files'
+    '%Local AppData%' = 'C:\Documents and Settings\<user_name>\Local Settings\Application Data'
+    '%My Pictures%' = 'C:\Documents and Settings\<user_name>\My Documents\My Pictures'
+    '%My Videos%' = 'C:\Documents and Settings\<user_name>\My Documents\My Videos'
+    '%NetHood%' = 'C:\Documents and Settings\<user_name>\NetHood'
+    '%Personal%' = 'C:\Documents and Settings\<user_name>\My Documents'
+    '%PrintHood%' = 'C:\Documents and Settings\<user_name>\PrintHood'
+    '%Profile%' = 'C:\Documents and Settings\<user_name>'
+    '%Profiles%' = 'C:\Documents and Settings'
+    '%Program Files Common%' = 'C:\Program Files\Common Files'
+    '%ProgramFilesDir%' = 'C:\Program Files'
+    '%Programs%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs'
+    '%Recent%' = 'C:\Documents and Settings\<user_name>\My Recent Documents'
+    '%Resources%' = 'C:\Windows\Resources'
+    '%Resources Localized%' = ('C:\Windows\Resources\' + (Get-Culture).LCID) # TODO: Confirm?
+    '%SendTo%' = 'C:\Documents and Settings\<user_name>\SendTo'
+    '%Startup%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs\Startup'
+    '%SystemRoot%' = 'C:\Windows'
+    '%SystemSystem%' = 'C:\Windows\System32'
+    '%TEMP%' = 'C:\Documents and Settings\<user_name>\Local Settings\Temp'
+    '%Templates%' = 'C:\Documents and Settings\<user_name>\Templates'
+}
+
+# For effeciency, replace <user_name> with the actual username here
+# https://stackoverflow.com/questions/5879871/powershell-updating-hash-table-values-in-a-foreach-loop
+foreach ($key in $($Macros.Keys)) {
+    $Macros[$key] = $Macros[$key].Replace('<user_name>', $env:UserName)
+}
+
 
 # Pattern should contain $1 where the drive letter goes
 function Get-DrivePrefix ([string]$Path, [string]$Pattern) {
@@ -20,64 +69,15 @@ function Get-DrivePrefix ([string]$Path, [string]$Pattern) {
 }
 
 
-# https://pubs.vmware.com/thinapp-5/topic/com.vmware.thinapp50.userguide.doc/processing_systemroot.html
 function Get-RealPath ([String]$Path) {
 
     # Convert drive prefix into real path, uppercase
     $Path = Get-DrivePrefix $Path '$1:\'
 
-    # Copied from the link above
-    $hash = @{
-        '%AdminTools%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs\Administrative Tools'
-        '%AppData%' = 'C:\Documents and Settings\<user_name>\Application Data'
-        '%CDBurn Area%' = 'C:\Documents and Settings\<user_name>\Local Settings\Application Data\Microsoft\CD Burning'
-        '%Common AdminTools%' = 'C:\Documents and Settings\All Users\Start Menu\Programs\Administrative Tools'
-        '%Common AppData%' = 'C:\Documents and Settings\All Users\Application Data'
-        '%Common Desktop%' = 'C:\Documents and Settings\All Users\Desktop'
-        '%Common Documents%' = 'C:\Documents and Settings\All Users\Documents'
-        '%Common Favorites%' = 'C:\Documents and Settings\All Users\Favorites'
-        '%Common Programs%' = 'C:\Documents and Settings\All Users\Start Menu\Programs'
-        '%Common StartMenu%' = 'C:\Documents and Settings\All Users\Start Menu'
-        '%Common Startup%' = 'C:\Documents and Settings\All Users\Start Menu\Programs\Startup'
-        '%Common Templates%' = 'C:\Documents and Settings\All Users\Templates'
-        '%Cookies%' = 'C:\Documents and Settings\<user_name>\Cookies'
-        '%Desktop%' = 'C:\Documents and Settings\<user_name>\Desktop'
-        # Drive prefixes omitted, since we already handled it
-        '%Favorites%' = 'C:\Documents and Settings\<user_name>\Favorites'
-        '%Fonts%' = 'C:\Windows\Fonts'
-        '%History%' = 'C:\Documents and Settings\<user_name>\Local Settings\History'
-        '%Internet Cache%' = 'C:\Documents and Settings\<user_name>\Local Settings\Temporary Internet Files'
-        '%Local AppData%' = 'C:\Documents and Settings\<user_name>\Local Settings\Application Data'
-        '%My Pictures%' = 'C:\Documents and Settings\<user_name>\My Documents\My Pictures'
-        '%My Videos%' = 'C:\Documents and Settings\<user_name>\My Documents\My Videos'
-        '%NetHood%' = 'C:\Documents and Settings\<user_name>\NetHood'
-        '%Personal%' = 'C:\Documents and Settings\<user_name>\My Documents'
-        '%PrintHood%' = 'C:\Documents and Settings\<user_name>\PrintHood'
-        '%Profile%' = 'C:\Documents and Settings\<user_name>'
-        '%Profiles%' = 'C:\Documents and Settings'
-        '%Program Files Common%' = 'C:\Program Files\Common Files'
-        '%ProgramFilesDir%' = 'C:\Program Files'
-        '%Programs%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs'
-        '%Recent%' = 'C:\Documents and Settings\<user_name>\My Recent Documents'
-        '%Resources%' = 'C:\Windows\Resources'
-        '%Resources Localized%' = ('C:\Windows\Resources\' + (Get-Culture).LCID) # TODO: Confirm?
-        '%SendTo%' = 'C:\Documents and Settings\<user_name>\SendTo'
-        '%Startup%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs\Startup'
-        '%SystemRoot%' = 'C:\Windows'
-        '%SystemSystem%' = 'C:\Windows\System32'
-        '%TEMP%' = 'C:\Documents and Settings\<user_name>\Local Settings\Temp'
-        '%Templates%' = 'C:\Documents and Settings\<user_name>\Templates'
-    }
-
     # https://stackoverflow.com/questions/9015138/looping-through-a-hash-or-using-an-array-in-powershell
-    foreach ($h in $hash.GetEnumerator()) {
-
-        # Normalize the value
-        $key = $h.Name
-        $val = $h.Value.Replace('<user_name>', $env:UserName)
-
+    foreach ($key in $($Macros.Keys)) {
         if ($Path.StartsWith($key)) {
-            $Path = $Path -replace "^$key", $val
+            $Path = $Path -replace "^$key", $Macros[$key]
             break
         }
     }
@@ -86,6 +86,7 @@ function Get-RealPath ([String]$Path) {
 }
 
 
+# We won't specify mock files using real paths, but if we did, use $Macros to convert
 function Get-MacroPath ([string]$Path) {
 
     # Replace drive prefix, uppercase
@@ -178,4 +179,10 @@ New-TouchItem '%drive_X%\bar.txt'
 Test-FileExists '%drive_X%\bar.txt'
 Test-FileExists '%drive_X%\lorem.txt'
 
-Start-Injector
+# Ensure that creating a file via injection results in...
+#   ...the same registry output as creating a file via the entrypoint
+#   ...the entry point seeing the file
+# Ditto for directories
+# Do this for each of the hash entrypoints
+# Do this for at least one drive
+# Then, do the same by creating a file in a subdirectory of each of the hash entrypoints
