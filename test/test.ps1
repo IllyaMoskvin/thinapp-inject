@@ -16,6 +16,72 @@ function Get-DrivePrefix ([string]$Path, [string]$Pattern) {
 }
 
 
+# https://pubs.vmware.com/thinapp-5/topic/com.vmware.thinapp50.userguide.doc/processing_systemroot.html
+function Get-RealPath ([String]$Path) {
+
+    # Convert drive prefix into real path, uppercase
+    $Path = Get-DrivePrefix $Path '$1:\'
+
+    # Copied from the link above
+    $hash = @{
+        '%AdminTools%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs\Administrative Tools'
+        '%AppData%' = 'C:\Documents and Settings\<user_name>\Application Data'
+        '%CDBurn Area%' = 'C:\Documents and Settings\<user_name>\Local Settings\Application Data\Microsoft\CD Burning'
+        '%Common AdminTools%' = 'C:\Documents and Settings\All Users\Start Menu\Programs\Administrative Tools'
+        '%Common AppData%' = 'C:\Documents and Settings\All Users\Application Data'
+        '%Common Desktop%' = 'C:\Documents and Settings\All Users\Desktop'
+        '%Common Documents%' = 'C:\Documents and Settings\All Users\Documents'
+        '%Common Favorites%' = 'C:\Documents and Settings\All Users\Favorites'
+        '%Common Programs%' = 'C:\Documents and Settings\All Users\Start Menu\Programs'
+        '%Common StartMenu%' = 'C:\Documents and Settings\All Users\Start Menu'
+        '%Common Startup%' = 'C:\Documents and Settings\All Users\Start Menu\Programs\Startup'
+        '%Common Templates%' = 'C:\Documents and Settings\All Users\Templates'
+        '%Cookies%' = 'C:\Documents and Settings\<user_name>\Cookies'
+        '%Desktop%' = 'C:\Documents and Settings\<user_name>\Desktop'
+        # Drive prefixes omitted, since we already handled it
+        '%Favorites%' = 'C:\Documents and Settings\<user_name>\Favorites'
+        '%Fonts%' = 'C:\Windows\Fonts'
+        '%History%' = 'C:\Documents and Settings\<user_name>\Local Settings\History'
+        '%Internet Cache%' = 'C:\Documents and Settings\<user_name>\Local Settings\Temporary Internet Files'
+        '%Local AppData%' = 'C:\Documents and Settings\<user_name>\Local Settings\Application Data'
+        '%My Pictures%' = 'C:\Documents and Settings\<user_name>\My Documents\My Pictures'
+        '%My Videos%' = 'C:\Documents and Settings\<user_name>\My Documents\My Videos'
+        '%NetHood%' = 'C:\Documents and Settings\<user_name>\NetHood'
+        '%Personal%' = 'C:\Documents and Settings\<user_name>\My Documents'
+        '%PrintHood%' = 'C:\Documents and Settings\<user_name>\PrintHood'
+        '%Profile%' = 'C:\Documents and Settings\<user_name>'
+        '%Profiles%' = 'C:\Documents and Settings'
+        '%Program Files Common%' = 'C:\Program Files\Common Files'
+        '%ProgramFilesDir%' = 'C:\Program Files'
+        '%Programs%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs'
+        '%Recent%' = 'C:\Documents and Settings\<user_name>\My Recent Documents'
+        '%Resources%' = 'C:\Windows\Resources'
+        '%Resources Localized%' = ('C:\Windows\Resources\' + (Get-Culture).LCID) # TODO: Confirm?
+        '%SendTo%' = 'C:\Documents and Settings\<user_name>\SendTo'
+        '%Startup%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs\Startup'
+        '%SystemRoot%' = 'C:\Windows'
+        '%SystemSystem%' = 'C:\Windows\System32'
+        '%TEMP%' = 'C:\Documents and Settings\<user_name>\Local Settings\Temp'
+        '%Templates%' = 'C:\Documents and Settings\<user_name>\Templates'
+    }
+
+    # https://stackoverflow.com/questions/9015138/looping-through-a-hash-or-using-an-array-in-powershell
+    foreach ($h in $hash.GetEnumerator()) {
+
+        # Normalize the value
+        $key = $h.Name
+        $val = $h.Value.Replace('<user_name>', $env:UserName)
+
+        if ($Path.StartsWith($key)) {
+            $Path = $Path -replace "^$key", $val
+            break
+        }
+    }
+
+    $Path
+}
+
+
 function Get-MacroPath ([string]$Path) {
 
     # Replace drive prefix, uppercase
@@ -71,3 +137,7 @@ function Uninstall-Build {
 
 Get-CapturePath 'x:\'
 Get-CapturePath 'X:\'
+
+Get-RealPath '%drive_x%\foo.txt'
+Get-RealPath '%drive_X%\bar.txt'
+Get-RealPath '%AppData%\baz.txt'
