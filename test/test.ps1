@@ -2,16 +2,24 @@ $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
 $DirBuild = Join-Path $PSScriptRoot -ChildPath 'build'
 
 
-function Get-MacroPath ([string]$Path) {
-
-    # Replace drive prefix, uppercase
+# Pattern should contain $1 where the drive letter goes
+function Get-DrivePrefix ([string]$Path, [string]$Pattern) {
     @('^([A-Za-z]):\\', '%drive_([A-Za-z])%\\') | ForEach-Object {
         if ($Path -match $_) {
             $drive = [regex]::match($Path, $_).Groups[1].Value
             $drive = $drive.ToUpper()
-            $Path = $Path -replace $_, "%drive_$drive%\"
+            $Pattern = $Pattern.Replace('$1', "$drive")
+            $Path = $Path -replace $_, $Pattern
         }
     }
+    $Path
+}
+
+
+function Get-MacroPath ([string]$Path) {
+
+    # Replace drive prefix, uppercase
+    $Path = Get-DrivePrefix $Path '%drive_$1%\'
 
     $Path
 }
