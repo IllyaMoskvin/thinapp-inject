@@ -137,11 +137,18 @@ function Uninstall-Build {
 }
 
 
+# Execute some path-based command using our cmd entrypoint
+function New-Command ([string]$Path, [string]$Command) {
+    $Path = Get-RealPath $Path
+    $Command = $Command.Replace('$1', "$Path")
+    $command = 'IF EXIST "' + $Path + '" (ECHO true) ELSE (ECHO false)'
+    & "$BinTest" /C "$Command"
+}
+
+
 # Check if file is recognized by our test app
 function Test-FileExists ([string]$Path) {
-    $Path = Get-RealPath $Path
-    $command = 'IF EXIST "' + $Path + '" (ECHO true) ELSE (ECHO false)'
-    $output = & "$BinTest" /C "$command"
+    $output = New-Command $Path 'IF EXIST "$1" (ECHO true) ELSE (ECHO false)'
     $output -eq 'true'
 }
 
@@ -149,9 +156,7 @@ function Test-FileExists ([string]$Path) {
 # Use our cmd entrypoint to create an item
 # https://stackoverflow.com/questions/210201/how-to-create-empty-text-file-from-a-batch-file
 function New-TouchItem ([string]$Path) {
-    $Path = Get-RealPath $Path
-    $command = 'type NUL > "' + $Path + '"'
-    $output = & "$BinTest" /C "$command"
+    New-Command $Path 'type NUL > "$1"' | Out-Null
 }
 
 
@@ -163,3 +168,5 @@ Get-RealPath '%drive_X%\bar.txt'
 Get-RealPath '%AppData%\baz.txt'
 
 New-TouchItem '%drive_X%\bar.txt'
+Test-FileExists '%drive_X%\bar.txt'
+Test-FileExists '%drive_X%\lorem.txt'
