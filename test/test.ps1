@@ -1,6 +1,8 @@
 $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
 $DirBuild = Join-Path $PSScriptRoot -ChildPath 'build'
 
+$BinTest = Join-Path $DirBuild -ChildPath 'Test.exe'
+
 
 # Pattern should contain $1 where the drive letter goes
 function Get-DrivePrefix ([string]$Path, [string]$Pattern) {
@@ -132,6 +134,15 @@ function Install-Build {
 
 function Uninstall-Build {
     Remove-Item -Recurse -Force -Path $DirBuild
+}
+
+
+# Check if file is recognized by our test app
+function Test-FileExists ([string]$Path) {
+    $Path = Get-RealPath $Path
+    $command = 'IF EXIST "' + $Path + '" (ECHO true) ELSE (ECHO false)'
+    $output = & "$BinTest" /C "$command"
+    $output -eq 'true'
 }
 
 
