@@ -1,4 +1,5 @@
 $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
+$DirBuild = Join-Path $PSScriptRoot -ChildPath 'build'
 
 
 function Get-MacroPath ([string]$Path) {
@@ -46,6 +47,17 @@ function Remove-Mock ([string]$Path) {
     } else {
         Remove-Item -Path $fpath
     }
+}
+
+
+function Install-Build {
+    # Redirecting to Out-Null doesn't suppress `STDERR` output
+    & (Join-Path $DirCapture -ChildPath 'build.bat') | Out-Null
+}
+
+
+function Uninstall-Build {
+    Remove-Item -Recurse -Force -Path $DirBuild
 }
 
 
