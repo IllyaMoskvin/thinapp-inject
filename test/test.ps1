@@ -1,7 +1,9 @@
 $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
 $DirBuild = Join-Path $PSScriptRoot -ChildPath 'build'
+$DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
 
 $BinTest = Join-Path $DirBuild -ChildPath 'Test.exe'
+$BinScript = Join-Path $DirRoot -ChildPath 'thinapp-inject.ps1'
 
 
 # Pattern should contain $1 where the drive letter goes
@@ -160,6 +162,11 @@ function New-TouchItem ([string]$Path) {
 }
 
 
+# Runs the inject script
+function Start-Injector {
+    & $BinScript | Out-Null
+}
+
 Get-CapturePath 'x:\'
 Get-CapturePath 'X:\'
 
@@ -170,3 +177,5 @@ Get-RealPath '%AppData%\baz.txt'
 New-TouchItem '%drive_X%\bar.txt'
 Test-FileExists '%drive_X%\bar.txt'
 Test-FileExists '%drive_X%\lorem.txt'
+
+Start-Injector
