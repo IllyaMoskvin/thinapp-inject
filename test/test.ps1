@@ -31,5 +31,23 @@ function Add-Dir ([string]$Path) {
 }
 
 
+function Test-IsDirectory ([string]$Path) {
+    (Get-Item -Path $Path) -is [System.IO.DirectoryInfo]
+}
+
+
+function Remove-Mock ([string]$Path) {
+    $Path = (Get-CapturePath $Path)
+    if (!(Test-Item $Path)) {
+        Write-Host "$Path does not exist."
+        exit 1
+    } elseif (Test-IsDirectory $Path) {
+        Remove-Item -Recurse -Force -Path $Path
+    } else {
+        Remove-Item -Path $fpath
+    }
+}
+
+
 Get-CapturePath 'x:\'
 Get-CapturePath 'X:\'
