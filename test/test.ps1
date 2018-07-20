@@ -146,9 +146,20 @@ function Test-FileExists ([string]$Path) {
 }
 
 
+# Use our cmd entrypoint to create an item
+# https://stackoverflow.com/questions/210201/how-to-create-empty-text-file-from-a-batch-file
+function New-TouchItem ([string]$Path) {
+    $Path = Get-RealPath $Path
+    $command = 'type NUL > "' + $Path + '"'
+    $output = & "$BinTest" /C "$command"
+}
+
+
 Get-CapturePath 'x:\'
 Get-CapturePath 'X:\'
 
 Get-RealPath '%drive_x%\foo.txt'
 Get-RealPath '%drive_X%\bar.txt'
 Get-RealPath '%AppData%\baz.txt'
+
+New-TouchItem '%drive_X%\bar.txt'
