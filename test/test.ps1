@@ -157,6 +157,14 @@ function Uninstall-Build {
 }
 
 
+# TODO: Test that the injector works without existing Registry.rw.tvr
+# For now, run the cmd entrypoint once to create the registry files
+# Do this before running Start-Injector after a fresh build
+function Initialize-Build {
+    & "$BinTest" /C "exit"
+}
+
+
 # Runs the inject script
 function Start-Injector {
     & $BinScript | Out-Null
@@ -167,10 +175,15 @@ Uninstall-Build
 Install-Build
 
 Add-SandboxDir 'X:\foo\bar\baz\bleh'
+Initialize-Build
+Start-Injector
 Test-ItemExists '%drive_X%\foo\bar\baz'
 
+# This command fails, but the test passes
+# The directory already exists - it was injected!
 Add-VirtualDir 'X:\foo\bar\baz'
 Test-ItemExists '%drive_X%\foo\bar\baz'
+
 Add-VirtualFile '%drive_X%\bar.txt'
 Test-ItemExists '%drive_X%\bar.txt'
 Test-ItemExists '%drive_X%\lorem.txt'
