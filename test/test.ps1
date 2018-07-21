@@ -101,12 +101,12 @@ function Get-CapturePath ([string]$Path) {
 }
 
 
-function Add-File ([string]$Path) {
+function Add-CaptureFile ([string]$Path) {
     New-Item -Path (Get-CapturePath $Path) -ItemType File
 }
 
 
-function Add-Dir ([string]$Path) {
+function Add-CaptureDir ([string]$Path) {
     New-Item -Path (Get-CapturePath $Path) -ItemType Directory
 }
 
@@ -129,6 +129,28 @@ function Remove-Mock ([string]$Path) {
 }
 
 
+# Execute some path-based command using our cmd entrypoint
+function New-Command ([string]$Path, [string]$Command) {
+    $Path = Get-RealPath $Path
+    $Command = $Command.Replace('$1', "$Path")
+    & "$BinTest" /C "$Command"
+}
+
+
+# Check if file or directory is recognized by our test app
+function Test-ItemExists ([string]$Path) {
+    $output = New-Command $Path 'IF EXIST "$1" (ECHO true) ELSE (ECHO false)'
+    $output -eq 'true'
+}
+
+
+# Use our cmd entrypoint to create a file
+# https://stackoverflow.com/questions/210201/how-to-create-empty-text-file-from-a-batch-file
+function Add-VirtualFile ([string]$Path) {
+    New-Command $Path 'type NUL > "$1"' | Out-Null
+}
+
+
 function Install-Build {
     # Redirecting to Out-Null doesn't suppress `STDERR` output
     & (Join-Path $DirCapture -ChildPath 'build.bat') | Out-Null
@@ -144,32 +166,11 @@ function Uninstall-Build {
 }
 
 
-# Execute some path-based command using our cmd entrypoint
-function New-Command ([string]$Path, [string]$Command) {
-    $Path = Get-RealPath $Path
-    $Command = $Command.Replace('$1', "$Path")
-    & "$BinTest" /C "$Command"
-}
-
-
-# Check if file is recognized by our test app
-function Test-FileExists ([string]$Path) {
-    $output = New-Command $Path 'IF EXIST "$1" (ECHO true) ELSE (ECHO false)'
-    $output -eq 'true'
-}
-
-
-# Use our cmd entrypoint to create an item
-# https://stackoverflow.com/questions/210201/how-to-create-empty-text-file-from-a-batch-file
-function New-TouchItem ([string]$Path) {
-    New-Command $Path 'type NUL > "$1"' | Out-Null
-}
-
-
 # Runs the inject script
 function Start-Injector {
     & $BinScript | Out-Null
 }
+
 
 Get-CapturePath 'x:\'
 Get-CapturePath 'X:\'
@@ -181,9 +182,9 @@ Get-RealPath '%AppData%\baz.txt'
 Uninstall-Build
 Install-Build
 
-New-TouchItem '%drive_X%\bar.txt'
-Test-FileExists '%drive_X%\bar.txt'
-Test-FileExists '%drive_X%\lorem.txt'
+Add-VirtualFile '%drive_X%\bar.txt'
+Test-ItemExists '%drive_X%\bar.txt'
+Test-ItemExists '%drive_X%\lorem.txt'
 
 # Ensure that creating a file via injection results in...
 #   ...the same registry output as creating a file via the entrypoint
