@@ -1,6 +1,6 @@
 param (
     [switch]$SaveRegistry,
-    [switch]$SaveBuild, # TODO: Implement
+    [switch]$SaveBuild,
     [switch]$Save
 )
 
@@ -124,6 +124,7 @@ function Get-MacroPath ([string]$Path) {
 function New-Command ([string]$Path, [string]$Command) {
     $Path = Get-RealPath $Path
     $Command = $Command.Replace('$1', "$Path")
+    # Write-Host $Command # Uncomment for debug
     & "$BinTest" /C "$Command"
 }
 
@@ -243,6 +244,16 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
         $_
     }
 
+    if ($Save -or $SaveRegistry -or $TestRegistry) {
+        Reset-Sandbox
+
+        $Item | ForEach-Object {
+            Invoke-Expression ("Add-Virtual" + $_.Type + " " + $_.Path)
+        }
+
+        $RealRegistry = Get-SandboxRegistry
+    }
+
     Reset-Sandbox
 
     $Item | ForEach-Object {
@@ -255,36 +266,23 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
         $_.Pass = Test-ItemExists $_.Path
     }
 
-    # Start building the $Result object
     $Result = @{ Items = $Item }
 
-    # Check if the registry output matches vs. going through the entrypoint
-    if ($TestRegistry) {
-
+    if ($Save -or $SaveRegistry -or $TestRegistry) {
         $FakeRegistry = Get-SandboxRegistry
+    }
 
-        Reset-Sandbox
-
-        $Item | ForEach-Object {
-            Invoke-Expression ("Add-Virtual" + $_.Type + " " + $_.Path)
-        }
-
-        $RealRegistry = Get-SandboxRegistry
-
-        # Append to function output
-        $Result.Diff = Compare-Object $RealRegistry $FakeRegistry
+    if ($TestRegistry) {
         $Result.Match = $RealRegistry.Equals($FakeRegistry)
+    }
 
-        # Save registry if the correct param was passed
-        # TODO: Ensure this runs regardless of -TestRegistry
-        if ($Save -or $SaveRegistry) {
-            if (!(Test-Path $DirRegistry)) {
-                New-Item -Path $DirRegistry -ItemType Directory | Out-Null
-            }
-            $RealRegistry | Out-File -FilePath $TxtRealRegistry -Encoding Unicode -Force
-            $FakeRegistry | Out-File -FilePath $TxtFakeRegistry -Encoding Unicode -Force
+    # Save registry if the param was passed to script
+    if ($Save -or $SaveRegistry) {
+        if (!(Test-Path $DirRegistry)) {
+            New-Item -Path $DirRegistry -ItemType Directory | Out-Null
         }
-
+        $RealRegistry | Out-File -FilePath $TxtRealRegistry -Encoding Unicode -Force
+        $FakeRegistry | Out-File -FilePath $TxtFakeRegistry -Encoding Unicode -Force
     }
 
     $Result
@@ -299,7 +297,7 @@ Install-Build
 
 Write-Host 'Running tests...' -ForegroundColor Yellow
 
-$Result = Test-SandboxItem -TestRegistry $true -Item @(
+$Result = Test-SandboxItem -TestRegistry $false -Item @(
     @{
         # Test basic file
         Path = 'X:\foobar.txt'
@@ -358,8 +356,14 @@ if ($Result.ContainsKey('Match')) {
     Write-Host 'Registry match:' $Result.Match -ForegroundColor $forecolor
 }
 
-# Perform cleanup
-Uninstall-Build
+# Perform cleanup...
+if (!($Save -or $SaveRegistry)) {
+    Reset-Directory $DirRegistry
+}
+
+if (!($Save -or $SaveBuild)) {
+    Uninstall-Build
+}
 
 # TODO: Implement deeper levels of testing?
 #   Basic - check if sandbox sees injected items in one dir
