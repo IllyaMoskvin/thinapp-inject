@@ -1,10 +1,19 @@
+$DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
+$DirTemp = Join-Path $DirRoot -ChildPath 'tmp'
+
 $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
 $DirBuild = Join-Path $PSScriptRoot -ChildPath 'build'
 $DirSandbox = Join-Path $DirBuild -ChildPath 'Data'
-$DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
 
 $BinTest = Join-Path $DirBuild -ChildPath 'Test.exe'
 $BinScript = Join-Path $DirRoot -ChildPath 'thinapp-inject.ps1'
+
+$TvrSandbox = Join-Path $DirSandbox -ChildPath 'Registry.rw.tvr'
+
+# TODO: Make these configurable
+$DirBin = Join-Path $DirRoot -ChildPath 'bin'
+$BinVregtool = Join-Path $DirBin -ChildPath 'vregtool.exe'
+
 
 # https://pubs.vmware.com/thinapp-5/topic/com.vmware.thinapp50.userguide.doc/processing_systemroot.html
 $Macros = @{
@@ -179,6 +188,13 @@ function Reset-Sandbox {
 }
 
 
+function Get-SandboxRegistry {
+    New-Item -Path $DirTemp -ItemType Directory | Out-Null
+    & $BinVregtool "$TvrSandbox" 'ExportTxt' "$DirTemp" 'HKEY_LOCAL_MACHINE\FS'
+    Get-Content -Path (Join-Path $DirTemp -ChildPath 'HKEY_LOCAL_MACHINE.txt')
+}
+
+
 Uninstall-Build
 Install-Build
 
@@ -197,6 +213,8 @@ Test-ItemExists '%drive_X%\foo\bar\baz'
 Add-VirtualFile '%drive_X%\bar.txt'
 Test-ItemExists '%drive_X%\bar.txt'
 Test-ItemExists '%drive_X%\lorem.txt'
+
+Get-SandboxRegistry
 
 
 # Ensure that creating a file via injection results in...
