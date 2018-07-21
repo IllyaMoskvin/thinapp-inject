@@ -197,17 +197,41 @@ function Get-SandboxRegistry {
     Get-Content -Path (Join-Path $DirTemp -ChildPath 'HKEY_LOCAL_MACHINE.txt')
 }
 
+# Accepts [hashtable[]] or [string[]] or a mix of the two
 # If `Type` key is unspecified, assumes that the path is a file
-function Test-SandboxItem ([hashtable[]]$Item) {
+function Test-SandboxItem ([array]$Item) {
 
     Reset-Sandbox
 
-    $Item | ForEach-Object {
-        if ($_.ContainsKey('Type')) {
-            Invoke-Expression ("Add-Sandbox" + $_.Type + " " + $_.Path)
-        } else {
-            Add-SandboxFile $_.Path
+    # Normalize $Item to [hashtable[]] with `Type` keys
+    $Item = $Item | ForEach-Object {
+
+        if ($_ -is [string]) {
+            $_ = @{ Path = $_ }
         }
+
+        if ($_ -is [hashtable]) {
+
+            if (!($_.ContainsKey('Path'))) {
+                Throw 'Missing `Path` key in test path.'
+            }
+
+            # Default to creating files
+            if (!($_.ContainsKey('Type'))) {
+                $_.Type = 'File'
+            } elseif (!(@('Dir', 'File').Contains($_.Type))) {
+                Throw ('Invalid `Type` value in test path: ' + [string]$_.Type)
+            }
+
+        } else {
+            Throw ('Unexpected data type passed to Test-SandboxItem: ' + [string]$_)
+        }
+
+        $_
+    }
+
+    $Item | ForEach-Object {
+        Invoke-Expression ("Add-Sandbox" + $_.Type + " " + $_.Path)
     }
 
     Invoke-Injector
@@ -228,7 +252,20 @@ Install-Build
 #   Mid - check all dirs for the same
 #   Full - check lite, and if the two registries are the same
 
+Test-SandboxItem 'X:\gom'
+
 Test-SandboxItem @(
+    'X:\fom'
+    'X:\ham'
+)
+
+Test-SandboxItem @{
+    Path = 'X:\nom'
+    Type = 'Dir'
+}
+
+Test-SandboxItem @(
+    'X:\bom'
     @{
         Path = 'X:\foo'
         Type = 'Dir'
@@ -242,6 +279,14 @@ Test-SandboxItem @(
         # Defaults to file
     }
 )
+
+# Test-SandboxItem 999 # Triggers 'unexpected type' error
+
+Test-SandboxItem @(
+    'X:\fom'
+    333
+)
+
 
 # Add-VirtualDir 'X:\foo'
 # Write-Output 'Virtual Item Exists:'
