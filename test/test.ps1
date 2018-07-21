@@ -296,6 +296,12 @@ $Result = Test-SandboxItem -TestRegistry $false -Item @(
         Path = 'X:\foo\bar\baz'
         Type = 'Dir'
     }
+    @{
+        # Test something in %ProgramFilesDir%
+        # This is where ThinstallPlugins live
+        Path = '%ProgramFilesDir%\foobar.txt'
+        Type = 'File'
+    }
     # TODO: Test extensionless file w/ the same name as a directory?
 )
 
