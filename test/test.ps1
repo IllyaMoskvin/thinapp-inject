@@ -192,32 +192,39 @@ function Reset-Sandbox {
 
 
 function Get-SandboxRegistry {
-    New-Item -Path $DirTemp -ItemType Directory | Out-Null
+    New-Item -Path $DirTemp -ItemType Directory -Force | Out-Null
     & $BinVregtool "$TvrSandbox" 'ExportTxt' "$DirTemp" 'HKEY_LOCAL_MACHINE\FS'
     Get-Content -Path (Join-Path $DirTemp -ChildPath 'HKEY_LOCAL_MACHINE.txt')
 }
 
 
-Uninstall-Build
+# We only need to initialize the build once per test run
 Install-Build
+
+# Levels of testing:
+#   Lite - only check if sandbox sees injected items in one dir
+#   Mid - check all dirs for the same
+#   Full - check lite, and if the two registries are the same
 
 Reset-Sandbox
 
-Add-SandboxDir 'X:\foo\bar\baz\bleh'
+# Add-VirtualDir 'X:\foo'
+# Write-Output 'Virtual Item Exists:'
+# Test-ItemExists 'X:\foo' # True
+# $Real = Get-SandboxRegistry
+# Reset-Sandbox
+
+Add-SandboxDir 'X:\foo'
 Invoke-Injector
+Write-Output 'Mock Item Exists:'
+Test-ItemExists 'X:\foo' # True
+# $Fake = Get-SandboxRegistry
 
-Test-ItemExists '%drive_X%\foo\bar\baz'
+# Write-Output 'Identical registry:'
+# $Real.Equals($Fake) # True
 
-# This command fails, but the test passes
-# The directory already exists - it was injected!
-Add-VirtualDir 'X:\foo\bar\baz'
-Test-ItemExists '%drive_X%\foo\bar\baz'
-
-Add-VirtualFile '%drive_X%\bar.txt'
-Test-ItemExists '%drive_X%\bar.txt'
-Test-ItemExists '%drive_X%\lorem.txt'
-
-Get-SandboxRegistry
+# Perform cleanup
+Uninstall-Build
 
 
 # Ensure that creating a file via injection results in...
