@@ -171,12 +171,22 @@ function Initialize-Sandbox {
 }
 
 
+# TODO: See Uninstall-Build
+function Reset-Sandbox {
+    Get-ChildItem $DirSandbox -Recurse | Remove-Item -Recurse -Force
+    Remove-Item -Recurse -Force -Path $DirSandbox
+    Initialize-Sandbox # TODO: Remove when ready
+}
+
+
 Uninstall-Build
 Install-Build
 
+Reset-Sandbox
+
 Add-SandboxDir 'X:\foo\bar\baz\bleh'
-Initialize-Sandbox
 Invoke-Injector
+
 Test-ItemExists '%drive_X%\foo\bar\baz'
 
 # This command fails, but the test passes
