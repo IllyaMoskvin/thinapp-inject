@@ -154,18 +154,24 @@ function Add-SandboxDir ([string]$Path) {
 }
 
 
+# TODO: Check if file is locked?
+# TODO: Improve directory recursion?
+function Reset-Directory ([string]$Path) {
+    if (Test-Path $Path) {
+        Get-ChildItem $Path -Recurse | Remove-Item -Recurse -Force
+        Remove-Item -Recurse -Force -Path $Path
+    }
+}
+
+
 function Install-Build {
     # Redirecting to Out-Null doesn't suppress `STDERR` output
     & (Join-Path $DirCapture -ChildPath 'build.bat') | Out-Null
 }
 
 
-# TODO: Check if file is locked?
-# TODO: Check if file exists..?
-# TODO: Improve directory recursion?
 function Uninstall-Build {
-    Get-ChildItem $DirBuild -Recurse | Remove-Item -Recurse -Force
-    Remove-Item -Recurse -Force -Path $DirBuild
+    Reset-Directory $DirBuild
 }
 
 
@@ -183,10 +189,8 @@ function Initialize-Sandbox {
 }
 
 
-# TODO: See Uninstall-Build
 function Reset-Sandbox {
-    Get-ChildItem $DirSandbox -Recurse | Remove-Item -Recurse -Force
-    Remove-Item -Recurse -Force -Path $DirSandbox
+    Reset-Directory $DirSandbox
     Initialize-Sandbox # TODO: Remove when ready
 }
 
@@ -264,6 +268,9 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
     $Result
 }
 
+
+# Cleanup anything left over from previous runs
+Uninstall-Build
 
 # We only need to initialize the build once per test run
 Install-Build
