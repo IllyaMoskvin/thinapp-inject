@@ -96,39 +96,6 @@ function Get-MacroPath ([string]$Path) {
 }
 
 
-function Get-CapturePath ([string]$Path) {
-    Join-Path $DirCapture -ChildPath (Get-MacroPath $Path)
-}
-
-
-function Add-CaptureFile ([string]$Path) {
-    New-Item -Path (Get-CapturePath $Path) -ItemType File
-}
-
-
-function Add-CaptureDir ([string]$Path) {
-    New-Item -Path (Get-CapturePath $Path) -ItemType Directory
-}
-
-
-function Test-IsDirectory ([string]$Path) {
-    (Get-Item -Path $Path) -is [System.IO.DirectoryInfo]
-}
-
-
-function Remove-Mock ([string]$Path) {
-    $Path = (Get-CapturePath $Path)
-    if (!(Test-Item $Path)) {
-        Write-Host "$Path does not exist."
-        exit 1
-    } elseif (Test-IsDirectory $Path) {
-        Remove-Item -Recurse -Force -Path $Path
-    } else {
-        Remove-Item -Path $fpath
-    }
-}
-
-
 # Execute some path-based command using our cmd entrypoint
 function New-Command ([string]$Path, [string]$Command) {
     $Path = Get-RealPath $Path
@@ -179,9 +146,6 @@ function Start-Injector {
     & $BinScript | Out-Null
 }
 
-
-Get-CapturePath 'x:\'
-Get-CapturePath 'X:\'
 
 Get-RealPath '%drive_x%\foo.txt'
 Get-RealPath '%drive_X%\bar.txt'
