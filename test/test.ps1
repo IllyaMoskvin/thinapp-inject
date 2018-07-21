@@ -157,17 +157,17 @@ function Uninstall-Build {
 }
 
 
-# TODO: Test that the injector works without existing Registry.rw.tvr
-# For now, run the cmd entrypoint once to create the registry files
-# Do this before running Start-Injector after a fresh build
-function Initialize-Build {
-    & "$BinTest" /C "exit"
-}
-
-
 # Runs the inject script
 function Invoke-Injector {
     & $BinScript | Out-Null
+}
+
+
+# TODO: Test that the injector works without an existing Registry.rw.tvr
+# For now, run the cmd entrypoint once to create the sandbox registry files
+# Do this before running Invoke-Injector after a fresh build!
+function Initialize-Sandbox {
+    & "$BinTest" /C "exit"
 }
 
 
@@ -175,7 +175,7 @@ Uninstall-Build
 Install-Build
 
 Add-SandboxDir 'X:\foo\bar\baz\bleh'
-Initialize-Build
+Initialize-Sandbox
 Invoke-Injector
 Test-ItemExists '%drive_X%\foo\bar\baz'
 
