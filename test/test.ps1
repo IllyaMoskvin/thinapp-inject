@@ -166,7 +166,7 @@ function Initialize-Build {
 
 
 # Runs the inject script
-function Start-Injector {
+function Invoke-Injector {
     & $BinScript | Out-Null
 }
 
@@ -176,7 +176,7 @@ Install-Build
 
 Add-SandboxDir 'X:\foo\bar\baz\bleh'
 Initialize-Build
-Start-Injector
+Invoke-Injector
 Test-ItemExists '%drive_X%\foo\bar\baz'
 
 # This command fails, but the test passes
