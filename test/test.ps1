@@ -151,6 +151,13 @@ function Add-VirtualFile ([string]$Path) {
 }
 
 
+# Use our cmd entrypoint to create a direcctory
+# MKDIR can create the full directory hierarchy in one command
+function Add-VirtualDir ([string]$Path) {
+    New-Command $Path 'mkdir "$1"' | Out-Null
+}
+
+
 function Install-Build {
     # Redirecting to Out-Null doesn't suppress `STDERR` output
     & (Join-Path $DirCapture -ChildPath 'build.bat') | Out-Null
@@ -182,6 +189,8 @@ Get-RealPath '%AppData%\baz.txt'
 Uninstall-Build
 Install-Build
 
+Add-VirtualDir 'X:\foo\bar\baz'
+Test-ItemExists '%drive_X%\foo\bar\baz'
 Add-VirtualFile '%drive_X%\bar.txt'
 Test-ItemExists '%drive_X%\bar.txt'
 Test-ItemExists '%drive_X%\lorem.txt'
