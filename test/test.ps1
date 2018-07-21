@@ -197,12 +197,25 @@ function Get-SandboxRegistry {
     Get-Content -Path (Join-Path $DirTemp -ChildPath 'HKEY_LOCAL_MACHINE.txt')
 }
 
+# If `Type` key is unspecified, assumes that the path is a file
+function Test-SandboxItem ([hashtable[]]$Item) {
 
-function Test-SandboxItem ([string]$Path) {
     Reset-Sandbox
-    Add-SandboxDir $Path # TODO: Softcode this
+
+    $Item | ForEach-Object {
+        if ($_.ContainsKey('Type')) {
+            Invoke-Expression ("Add-Sandbox" + $_.Type + " " + $_.Path)
+        } else {
+            Add-SandboxFile $_.Path
+        }
+    }
+
     Invoke-Injector
-    Test-ItemExists $Path
+
+    $Item | ForEach-Object {
+        Test-ItemExists $_.Path
+    }
+
     # $Fake = Get-SandboxRegistry
 }
 
@@ -215,7 +228,20 @@ Install-Build
 #   Mid - check all dirs for the same
 #   Full - check lite, and if the two registries are the same
 
-Test-SandboxItem 'X:\foo'
+Test-SandboxItem @(
+    @{
+        Path = 'X:\foo'
+        Type = 'Dir'
+    }
+    @{
+        Path = 'X:\bar'
+        Type = 'File'
+    }
+    @{
+        Path = 'X:\baz'
+        # Defaults to file
+    }
+)
 
 # Add-VirtualDir 'X:\foo'
 # Write-Output 'Virtual Item Exists:'
