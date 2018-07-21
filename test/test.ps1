@@ -198,6 +198,15 @@ function Get-SandboxRegistry {
 }
 
 
+function Test-SandboxItem ([string]$Path) {
+    Reset-Sandbox
+    Add-SandboxDir $Path # TODO: Softcode this
+    Invoke-Injector
+    Test-ItemExists $Path
+    # $Fake = Get-SandboxRegistry
+}
+
+
 # We only need to initialize the build once per test run
 Install-Build
 
@@ -206,19 +215,13 @@ Install-Build
 #   Mid - check all dirs for the same
 #   Full - check lite, and if the two registries are the same
 
-Reset-Sandbox
+Test-SandboxItem 'X:\foo'
 
 # Add-VirtualDir 'X:\foo'
 # Write-Output 'Virtual Item Exists:'
 # Test-ItemExists 'X:\foo' # True
 # $Real = Get-SandboxRegistry
 # Reset-Sandbox
-
-Add-SandboxDir 'X:\foo'
-Invoke-Injector
-Write-Output 'Mock Item Exists:'
-Test-ItemExists 'X:\foo' # True
-# $Fake = Get-SandboxRegistry
 
 # Write-Output 'Identical registry:'
 # $Real.Equals($Fake) # True
