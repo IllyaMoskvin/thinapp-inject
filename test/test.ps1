@@ -199,7 +199,7 @@ function Get-SandboxRegistry {
 
 # Accepts [hashtable[]] or [string[]] or a mix of the two
 # If `Type` key is unspecified, assumes that the path is a file
-function Test-SandboxItem ([array]$Item) {
+function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
 
     Reset-Sandbox
 
@@ -240,22 +240,28 @@ function Test-SandboxItem ([array]$Item) {
         $_.Pass = Test-ItemExists $_.Path
     }
 
+    # Start building the $Result object
+    $Result = @{ Items = $Item }
+
     # Check if the registry output matches vs. going through the entrypoint
-    $FakeRegistry = Get-SandboxRegistry
+    if ($TestRegistry) {
 
-    Reset-Sandbox
+        $FakeRegistry = Get-SandboxRegistry
 
-    $Item | ForEach-Object {
-        Invoke-Expression ("Add-Virtual" + $_.Type + " " + $_.Path)
+        Reset-Sandbox
+
+        $Item | ForEach-Object {
+            Invoke-Expression ("Add-Virtual" + $_.Type + " " + $_.Path)
+        }
+
+        $RealRegistry = Get-SandboxRegistry
+
+        # Append to function output
+        $Result.Diff = Compare-Object $RealRegistry $FakeRegistry
+        $Result.Match = $RealRegistry.Equals($FakeRegistry)
     }
 
-    $RealRegistry = Get-SandboxRegistry
-
-    @{
-        Items = $Item
-        Match = $RealRegistry.Equals($FakeRegistry)
-        Diff = Compare-Object $RealRegistry $FakeRegistry
-    }
+    $Result
 }
 
 
@@ -264,7 +270,7 @@ Install-Build
 
 Write-Host 'Running tests...' -ForegroundColor Yellow
 
-$Result = Test-SandboxItem @(
+$Result = Test-SandboxItem -TestRegistry $false -Item @(
     @{
         # Test basic file
         Path = 'X:\foobar.txt'
@@ -305,7 +311,8 @@ $Passed = $Result.Items | Where-Object { $_.Pass }
 
 Write-Host $Passed.Count 'of' $Result.Items.Count 'tests passed!' -ForegroundColor Yellow
 
-if (!($Result.Match)) {
+# For now, we'll ignore differences in virtual registry
+if ($Result.Diff) {
     $Result.Diff
 }
 
