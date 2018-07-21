@@ -153,6 +153,7 @@ function Add-VirtualFile ([string]$Path) {
 
 # Use our cmd entrypoint to create a direcctory
 # MKDIR can create the full directory hierarchy in one command
+# If targeting non-existent drive, define it in `VirtualDrives` in Package.ini
 function Add-VirtualDir ([string]$Path) {
     New-Command $Path 'mkdir "$1"' | Out-Null
 }
