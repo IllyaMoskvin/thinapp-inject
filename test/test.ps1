@@ -1,9 +1,20 @@
+param (
+    [switch]$SaveRegistry,
+    [switch]$SaveBuild, # TODO: Implement
+    [switch]$Save
+)
+
 $DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
 $DirTemp = Join-Path $DirRoot -ChildPath 'tmp'
 
 $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
 $DirBuild = Join-Path $PSScriptRoot -ChildPath 'build'
 $DirSandbox = Join-Path $DirBuild -ChildPath 'Data'
+
+$DirRegistry = Join-Path $PSScriptRoot -ChildPath 'registry'
+
+$TxtRealRegistry = Join-Path $DirRegistry -ChildPath 'real.txt'
+$TxtFakeRegistry = Join-Path $DirRegistry -ChildPath 'fake.txt'
 
 $BinTest = Join-Path $DirBuild -ChildPath 'Test.exe'
 $BinScript = Join-Path $DirRoot -ChildPath 'thinapp-inject.ps1'
@@ -263,6 +274,17 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
         # Append to function output
         $Result.Diff = Compare-Object $RealRegistry $FakeRegistry
         $Result.Match = $RealRegistry.Equals($FakeRegistry)
+
+        # Save registry if the correct param was passed
+        # TODO: Ensure this runs regardless of -TestRegistry
+        if ($Save -or $SaveRegistry) {
+            if (!(Test-Path $DirRegistry)) {
+                New-Item -Path $DirRegistry -ItemType Directory | Out-Null
+            }
+            $RealRegistry | Out-File -FilePath $TxtRealRegistry -Encoding Unicode -Force
+            $FakeRegistry | Out-File -FilePath $TxtFakeRegistry -Encoding Unicode -Force
+        }
+
     }
 
     $Result
@@ -277,7 +299,7 @@ Install-Build
 
 Write-Host 'Running tests...' -ForegroundColor Yellow
 
-$Result = Test-SandboxItem -TestRegistry $false -Item @(
+$Result = Test-SandboxItem -TestRegistry $true -Item @(
     @{
         # Test basic file
         Path = 'X:\foobar.txt'
@@ -331,8 +353,9 @@ $Passed = $Result.Items | Where-Object { $_.Pass }
 Write-Host $Passed.Count 'of' $Result.Items.Count 'tests passed!' -ForegroundColor Yellow
 
 # For now, we'll ignore differences in virtual registry
-if ($Result.Diff) {
-    $Result.Diff
+if ($Result.ContainsKey('Match')) {
+    $forecolor = if ($Result.Match) { 'Green' } else { 'Red' }
+    Write-Host 'Registry match:' $Result.Match -ForegroundColor $forecolor
 }
 
 # Perform cleanup
