@@ -205,8 +205,6 @@ function Get-SandboxRegistry {
 # If `Type` key is unspecified, assumes that the path is a file
 function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
 
-    Reset-Sandbox
-
     # Normalize $Item to [hashtable[]] with `Type` keys
     $Item = $Item | ForEach-Object {
 
@@ -233,6 +231,8 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
 
         $_
     }
+
+    Reset-Sandbox
 
     $Item | ForEach-Object {
         Invoke-Expression ("Add-Sandbox" + $_.Type + " " + $_.Path)
