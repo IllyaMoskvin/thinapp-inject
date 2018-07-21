@@ -237,10 +237,24 @@ function Test-SandboxItem ([array]$Item) {
     Invoke-Injector
 
     $Item | ForEach-Object {
-        Test-ItemExists $_.Path
+        $_.Pass = Test-ItemExists $_.Path
     }
 
-    # $Fake = Get-SandboxRegistry
+    # Check if the registry output matches vs. going through the entrypoint
+    $FakeRegistry = Get-SandboxRegistry
+
+    Reset-Sandbox
+
+    $Item | ForEach-Object {
+        Invoke-Expression ("Add-Virtual" + $_.Type + " " + $_.Path)
+    }
+
+    $RealRegistry = Get-SandboxRegistry
+
+    @{
+        Match = $RealRegistry.Equals($FakeRegistry)
+        Item = $Item
+    }
 }
 
 
