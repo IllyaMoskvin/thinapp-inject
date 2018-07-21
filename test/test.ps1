@@ -14,6 +14,9 @@ $TvrSandbox = Join-Path $DirSandbox -ChildPath 'Registry.rw.tvr'
 $DirBin = Join-Path $DirRoot -ChildPath 'bin'
 $BinVregtool = Join-Path $DirBin -ChildPath 'vregtool.exe'
 
+# Set the envar required by build.bat
+$env:THINSTALL_BIN = $DirBin
+
 
 # https://pubs.vmware.com/thinapp-5/topic/com.vmware.thinapp50.userguide.doc/processing_systemroot.html
 $Macros = @{
