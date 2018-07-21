@@ -302,6 +302,12 @@ $Result = Test-SandboxItem -TestRegistry $false -Item @(
         Path = '%ProgramFilesDir%\foobar.txt'
         Type = 'File'
     }
+    @{
+        # Test something in %AppData%
+        # Litmus test for macro resolution
+        Path = '%AppData%\foobar.txt'
+        Type = 'File'
+    }
     # TODO: Test extensionless file w/ the same name as a directory?
 )
 
