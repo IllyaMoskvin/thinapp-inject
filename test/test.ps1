@@ -252,8 +252,9 @@ function Test-SandboxItem ([array]$Item) {
     $RealRegistry = Get-SandboxRegistry
 
     @{
+        Items = $Item
         Match = $RealRegistry.Equals($FakeRegistry)
-        Item = $Item
+        Diff = Compare-Object $RealRegistry $FakeRegistry
     }
 }
 
@@ -261,64 +262,64 @@ function Test-SandboxItem ([array]$Item) {
 # We only need to initialize the build once per test run
 Install-Build
 
-# Levels of testing:
-#   Lite - only check if sandbox sees injected items in one dir
-#   Mid - check all dirs for the same
-#   Full - check lite, and if the two registries are the same
+Write-Host 'Running tests...' -ForegroundColor Yellow
 
-Test-SandboxItem 'X:\gom'
-
-Test-SandboxItem @(
-    'X:\fom'
-    'X:\ham'
-)
-
-Test-SandboxItem @{
-    Path = 'X:\nom'
-    Type = 'Dir'
-}
-
-Test-SandboxItem @(
-    'X:\bom'
+$Result = Test-SandboxItem @(
     @{
-        Path = 'X:\foo'
-        Type = 'Dir'
-    }
-    @{
-        Path = 'X:\bar'
+        # Test basic file
+        Path = 'X:\foobar.txt'
         Type = 'File'
     }
     @{
-        Path = 'X:\baz'
-        # Defaults to file
+        # Test subdirectory
+        Path = 'X:\foobar'
+        Type = 'Dir'
     }
+    @{
+        # Test file in subdirectory
+        Path = 'X:\foobar\baz.txt'
+        Type = 'File'
+    }
+    @{
+        # Test sub-subdirectory
+        Path = 'X:\foobar\foobaz'
+        Type = 'Dir'
+    }
+    @{
+        # Test sub-sub-sub-directory
+        Path = 'X:\foo\bar\baz'
+        Type = 'Dir'
+    }
+    # TODO: Test extensionless file w/ the same name as a directory?
 )
 
-# Test-SandboxItem 999 # Triggers 'unexpected type' error
+$Result.Items | ForEach-Object {
+    $checkmark = '[' + $(if ($_.Pass) { 'X' } else { ' ' }) + ']'
+    $forecolor = if ($_.Pass) { 'Green' } else { 'Red' }
+    $type = $_.Type.PadRight(4, ' ')
+    $path = $_.Path
+    Write-Host -Object " $checkmark $type $path " -ForegroundColor $forecolor
+}
 
-Test-SandboxItem @(
-    'X:\fom'
-    333
-)
+$Passed = $Result.Items | Where-Object { $_.Pass }
 
+Write-Host $Passed.Count 'of' $Result.Items.Count 'tests passed!' -ForegroundColor Yellow
 
-# Add-VirtualDir 'X:\foo'
-# Write-Output 'Virtual Item Exists:'
-# Test-ItemExists 'X:\foo' # True
-# $Real = Get-SandboxRegistry
-# Reset-Sandbox
-
-# Write-Output 'Identical registry:'
-# $Real.Equals($Fake) # True
+if (!($Result.Match)) {
+    $Result.Diff
+}
 
 # Perform cleanup
 Uninstall-Build
 
+# TODO: Implement deeper levels of testing?
+#   Basic - check if sandbox sees injected items in one dir
+#   Full - check all macro dirs for the same
 
 # Ensure that creating a file via injection results in...
-#   ...the same registry output as creating a file via the entrypoint
 #   ...the entry point seeing the file
+#   ...the same registry output as creating a file via the entrypoint
 # Ditto for directories
-# Do this for each of the hash entrypoints
 # Do this for at least one drive
+# Do this for each of the hash entrypoints
 # Then, do the same by creating a file in a subdirectory of each of the hash entrypoints
