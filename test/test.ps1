@@ -135,7 +135,11 @@ function Install-Build {
 }
 
 
+# TODO: Check if file is locked?
+# TODO: Check if file exists..?
+# TODO: Improve directory recursion?
 function Uninstall-Build {
+    Get-ChildItem $DirBuild -Recurse | Remove-Item -Recurse -Force
     Remove-Item -Recurse -Force -Path $DirBuild
 }
 
@@ -173,6 +177,9 @@ Get-CapturePath 'X:\'
 Get-RealPath '%drive_x%\foo.txt'
 Get-RealPath '%drive_X%\bar.txt'
 Get-RealPath '%AppData%\baz.txt'
+
+Uninstall-Build
+Install-Build
 
 New-TouchItem '%drive_X%\bar.txt'
 Test-FileExists '%drive_X%\bar.txt'
