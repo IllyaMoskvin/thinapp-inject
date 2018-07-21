@@ -1,5 +1,6 @@
 $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
 $DirBuild = Join-Path $PSScriptRoot -ChildPath 'build'
+$DirSandbox = Join-Path $DirBuild -ChildPath 'Data'
 $DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
 
 $BinTest = Join-Path $DirBuild -ChildPath 'Test.exe'
@@ -126,6 +127,21 @@ function Add-VirtualDir ([string]$Path) {
 }
 
 
+function Get-SandboxPath ([string]$Path) {
+    Join-Path $DirSandbox -ChildPath (Get-MacroPath $Path)
+}
+
+
+function Add-SandboxFile ([string]$Path) {
+    New-Item -Path (Get-SandboxPath $Path) -Force -ItemType File | Out-Null
+}
+
+
+function Add-SandboxDir ([string]$Path) {
+    New-Item -Path (Get-SandboxPath $Path) -ItemType Directory | Out-Null
+}
+
+
 function Install-Build {
     # Redirecting to Out-Null doesn't suppress `STDERR` output
     & (Join-Path $DirCapture -ChildPath 'build.bat') | Out-Null
@@ -147,18 +163,18 @@ function Start-Injector {
 }
 
 
-Get-RealPath '%drive_x%\foo.txt'
-Get-RealPath '%drive_X%\bar.txt'
-Get-RealPath '%AppData%\baz.txt'
-
 Uninstall-Build
 Install-Build
+
+Add-SandboxDir 'X:\foo\bar\baz\bleh'
+Test-ItemExists '%drive_X%\foo\bar\baz'
 
 Add-VirtualDir 'X:\foo\bar\baz'
 Test-ItemExists '%drive_X%\foo\bar\baz'
 Add-VirtualFile '%drive_X%\bar.txt'
 Test-ItemExists '%drive_X%\bar.txt'
 Test-ItemExists '%drive_X%\lorem.txt'
+
 
 # Ensure that creating a file via injection results in...
 #   ...the same registry output as creating a file via the entrypoint
