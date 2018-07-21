@@ -144,7 +144,6 @@ function Uninstall-Build {
 function New-Command ([string]$Path, [string]$Command) {
     $Path = Get-RealPath $Path
     $Command = $Command.Replace('$1', "$Path")
-    $command = 'IF EXIST "' + $Path + '" (ECHO true) ELSE (ECHO false)'
     & "$BinTest" /C "$Command"
 }
 
