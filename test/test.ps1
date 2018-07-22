@@ -265,7 +265,7 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
         Reset-Sandbox
 
         $Item | ForEach-Object {
-            Invoke-Expression ("Add-Virtual" + $_.Type + " " + $_.Path)
+            Invoke-Expression ('Add-Virtual' + $_.Type + ' "' + $_.Path + '"')
         }
 
         $RealRegistry = Get-SandboxRegistry
@@ -274,7 +274,7 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
     Reset-Sandbox
 
     $Item | ForEach-Object {
-        Invoke-Expression ("Add-Sandbox" + $_.Type + " " + $_.Path)
+        Invoke-Expression ('Add-Sandbox' + $_.Type + ' "' + $_.Path + '"')
     }
 
     Invoke-Injector
