@@ -363,6 +363,22 @@ function Get-BasicTest {
 }
 
 
+function Get-MacroTest {
+    $Macros.Keys | ForEach-Object {
+        @{
+            Path = ($_ + '\foobar.txt')
+            Type = 'File'
+        }
+    }
+}
+
+
+# Currently, everything in basic is covered in macro
+function Get-FullTest {
+    (Get-SharedTest) + (Get-MacroTest)
+}
+
+
 # Cleanup anything left over from previous runs
 Uninstall-Build
 
@@ -371,7 +387,7 @@ Install-Build
 
 Write-Host 'Running tests...' -ForegroundColor Yellow
 
-$Result = Test-SandboxItem -TestRegistry $TestRegistry -Item (Get-BasicTest)
+$Result = Test-SandboxItem -TestRegistry $TestRegistry -Item (Get-FullTest)
 
 $Result.Items | ForEach-Object {
     $checkmark = '[' + $(if ($_.Pass) { 'X' } else { ' ' }) + ']'
