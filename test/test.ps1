@@ -17,7 +17,7 @@ $DirRegistry = Join-Path $PSScriptRoot -ChildPath 'registry'
 $TxtRealRegistry = Join-Path $DirRegistry -ChildPath 'real.txt'
 $TxtFakeRegistry = Join-Path $DirRegistry -ChildPath 'fake.txt'
 
-$BinTest = Join-Path $DirBuild -ChildPath 'Test.exe'
+$BinTest = Join-Path $DirBuild -ChildPath 'cmd.exe'
 $BinScript = Join-Path $DirRoot -ChildPath 'thinapp-inject.ps1'
 
 $TvrSandbox = Join-Path $DirSandbox -ChildPath 'Registry.rw.tvr'
@@ -60,7 +60,7 @@ $Macros = @{
     '%Profile%' = 'C:\Documents and Settings\<user_name>'
     '%Profiles%' = 'C:\Documents and Settings'
     '%Program Files Common%' = 'C:\Program Files\Common Files'
-    '%ProgramFilesDir%' = 'C:\Program Files'
+    # %ProgramFilesDir% is set manually below
     '%Programs%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs'
     '%Recent%' = 'C:\Documents and Settings\<user_name>\My Recent Documents'
     '%Resources%' = 'C:\Windows\Resources'
@@ -77,6 +77,20 @@ $Macros = @{
 # https://stackoverflow.com/questions/5879871/powershell-updating-hash-table-values-in-a-foreach-loop
 foreach ($key in $($Macros.Keys)) {
     $Macros[$key] = $Macros[$key].Replace('<user_name>', $env:UserName)
+}
+
+# %ProgramFilesDir% is handled conditionally:
+# https://communities.vmware.com/thread/471073
+#
+# Running the application on a...
+#   ...64-bit OS resolves the macro to "C:\Program Files (x86)"
+#   ...32-bit OS resolves the macro to "C:\Program Files"
+#
+# It doesn't seem to matter if the application is 32-bit or 64-bit!
+if ([Environment]::Is64BitOperatingSystem) {
+    $Macros['%ProgramFilesDir%'] = 'C:\Program Files (x86)'
+} else {
+    $Macros['%ProgramFilesDir%'] = 'C:\Program Files'
 }
 
 
@@ -327,6 +341,12 @@ $Result = Test-SandboxItem -TestRegistry $TestRegistry -Item @(
         Type = 'Dir'
     }
     @{
+        # Test something in %SystemSystem%
+        # Litmus test for 32-bit vs 64-bit
+        Path = '%SystemSystem%\foobar.txt'
+        Type = 'File'
+    }
+    @{
         # Test something in %ProgramFilesDir%
         # This is where ThinstallPlugins live
         Path = '%ProgramFilesDir%\foobar.txt'
@@ -339,6 +359,7 @@ $Result = Test-SandboxItem -TestRegistry $TestRegistry -Item @(
         Type = 'File'
     }
     # TODO: Test extensionless file w/ the same name as a directory?
+    # Nevermind, Windows doesn't support that behavior...
 )
 
 $Result.Items | ForEach-Object {
