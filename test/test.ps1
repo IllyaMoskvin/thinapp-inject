@@ -306,6 +306,63 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
 }
 
 
+function Get-SharedTest {
+    @(
+        @{
+            # Test basic file
+            Path = 'X:\foobar.txt'
+            Type = 'File'
+        }
+        @{
+            # Test subdirectory
+            Path = 'X:\foobar'
+            Type = 'Dir'
+        }
+        @{
+            # Test file in subdirectory
+            Path = 'X:\foobar\baz.txt'
+            Type = 'File'
+        }
+        @{
+            # Test sub-subdirectory
+            Path = 'X:\foobar\foobaz'
+            Type = 'Dir'
+        }
+        @{
+            # Test sub-sub-sub-directory
+            Path = 'X:\foo\bar\baz'
+            Type = 'Dir'
+        }
+    )
+}
+
+
+function Get-BasicTest {
+    (Get-SharedTest) + @(
+        @{
+            # Test something in %SystemSystem%
+            # Litmus test for 32-bit vs 64-bit
+            Path = '%SystemSystem%\foobar.txt'
+            Type = 'File'
+        }
+        @{
+            # Test something in %ProgramFilesDir%
+            # This is where ThinstallPlugins live
+            Path = '%ProgramFilesDir%\foobar.txt'
+            Type = 'File'
+        }
+        @{
+            # Test something in %AppData%
+            # Litmus test for macro resolution
+            Path = '%AppData%\foobar.txt'
+            Type = 'File'
+        }
+        # TODO: Test extensionless file w/ the same name as a directory?
+        # Nevermind, Windows doesn't support that behavior...
+    )
+}
+
+
 # Cleanup anything left over from previous runs
 Uninstall-Build
 
@@ -314,53 +371,7 @@ Install-Build
 
 Write-Host 'Running tests...' -ForegroundColor Yellow
 
-$Result = Test-SandboxItem -TestRegistry $TestRegistry -Item @(
-    @{
-        # Test basic file
-        Path = 'X:\foobar.txt'
-        Type = 'File'
-    }
-    @{
-        # Test subdirectory
-        Path = 'X:\foobar'
-        Type = 'Dir'
-    }
-    @{
-        # Test file in subdirectory
-        Path = 'X:\foobar\baz.txt'
-        Type = 'File'
-    }
-    @{
-        # Test sub-subdirectory
-        Path = 'X:\foobar\foobaz'
-        Type = 'Dir'
-    }
-    @{
-        # Test sub-sub-sub-directory
-        Path = 'X:\foo\bar\baz'
-        Type = 'Dir'
-    }
-    @{
-        # Test something in %SystemSystem%
-        # Litmus test for 32-bit vs 64-bit
-        Path = '%SystemSystem%\foobar.txt'
-        Type = 'File'
-    }
-    @{
-        # Test something in %ProgramFilesDir%
-        # This is where ThinstallPlugins live
-        Path = '%ProgramFilesDir%\foobar.txt'
-        Type = 'File'
-    }
-    @{
-        # Test something in %AppData%
-        # Litmus test for macro resolution
-        Path = '%AppData%\foobar.txt'
-        Type = 'File'
-    }
-    # TODO: Test extensionless file w/ the same name as a directory?
-    # Nevermind, Windows doesn't support that behavior...
-)
+$Result = Test-SandboxItem -TestRegistry $TestRegistry -Item (Get-BasicTest)
 
 $Result.Items | ForEach-Object {
     $checkmark = '[' + $(if ($_.Pass) { 'X' } else { ' ' }) + ']'
