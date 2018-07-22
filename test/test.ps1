@@ -166,12 +166,14 @@ function Add-SandboxDir ([string]$Path) {
 }
 
 
-# TODO: Check if file is locked?
-# TODO: Improve directory recursion?
+# https://stackoverflow.com/questions/24992681/powershell-check-if-a-file-is-locked
 function Reset-Directory ([string]$Path) {
-    if (Test-Path $Path) {
-        Get-ChildItem $Path -Recurse | Remove-Item -Recurse -Force
-        Remove-Item -Recurse -Force -Path $Path
+    try {
+        if (Test-Path $Path -ErrorAction Stop) {
+            Remove-Item -Recurse -Force -Path $Path -ErrorAction Stop
+        }
+    } catch {
+        throw ('Cannot reset directory. Ensure its files are not in use: ' + $Path)
     }
 }
 
