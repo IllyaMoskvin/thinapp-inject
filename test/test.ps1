@@ -2,7 +2,8 @@ param (
     [switch]$TestRegistry,
     [switch]$SaveRegistry,
     [switch]$SaveBuild,
-    [switch]$Save
+    [switch]$Save,
+    [string]$Test
 )
 
 $DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
@@ -379,15 +380,30 @@ function Get-FullTest {
 }
 
 
+# https://stackoverflow.com/questions/3919798/how-to-check-if-a-cmdlet-exists-in-powershell-at-runtime-via-script
+function Test-Command($cmdname)
+{
+    return [bool](Get-Command -Name $cmdname -ErrorAction SilentlyContinue)
+}
+
+
 # Cleanup anything left over from previous runs
 Uninstall-Build
 
 # We only need to initialize the build once per test run
 Install-Build
 
-Write-Host 'Running tests...' -ForegroundColor Yellow
+if (!$Test) {
+    Write-Host 'No `Test` param specified. Falling back to `Basic`...'
+    $Test = 'Basic'
+} elseif (!(Test-Command "Get-${Test}Test")) {
+    Write-Host 'Invalid value for `Test` param. Falling back to `Basic`...'
+    $Test = 'Basic'
+}
 
-$Result = Test-SandboxItem -TestRegistry $TestRegistry -Item (Get-FullTest)
+Write-Host ('Running `' + $Test + '` test suite...') -ForegroundColor Yellow
+
+$Result = Test-SandboxItem -TestRegistry $TestRegistry -Item (Invoke-Expression "Get-${Test}Test")
 
 $Result.Items | ForEach-Object {
     $checkmark = '[' + $(if ($_.Pass) { 'X' } else { ' ' }) + ']'
@@ -415,10 +431,6 @@ if (!($Save -or $SaveRegistry)) {
 if (!($Save -or $SaveBuild)) {
     Uninstall-Build
 }
-
-# TODO: Implement deeper levels of testing?
-#   Basic - check if sandbox sees injected items in one dir
-#   Full - check all macro dirs for the same
 
 # Ensure that creating a file via injection results in...
 #   ...the entry point seeing the file
