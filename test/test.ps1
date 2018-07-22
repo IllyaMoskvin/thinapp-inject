@@ -1,4 +1,5 @@
 param (
+    [switch]$TestRegistry,
     [switch]$SaveRegistry,
     [switch]$SaveBuild,
     [switch]$Save
@@ -299,7 +300,7 @@ Install-Build
 
 Write-Host 'Running tests...' -ForegroundColor Yellow
 
-$Result = Test-SandboxItem -TestRegistry $false -Item @(
+$Result = Test-SandboxItem -TestRegistry $TestRegistry -Item @(
     @{
         # Test basic file
         Path = 'X:\foobar.txt'
