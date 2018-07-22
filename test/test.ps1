@@ -31,8 +31,18 @@ $BinVregtool = Join-Path $DirBin -ChildPath 'vregtool.exe'
 $env:THINSTALL_BIN = $DirBin
 
 
+$SharedMacros = @{
+    '%Fonts%' = 'C:\Windows\Fonts'
+    '%Resources Localized%' = ('C:\Windows\Resources\' + (Get-Culture).LCID) # TODO: Confirm?
+    '%Resources%' = 'C:\Windows\Resources'
+    '%SystemRoot%' = 'C:\Windows'
+    '%SystemSystem%' = 'C:\Windows\System32'
+    # %Program Files Common% and %ProgramFilesDir% is set manually below
+}
+
+
 # https://pubs.vmware.com/thinapp-5/topic/com.vmware.thinapp50.userguide.doc/processing_systemroot.html
-$Macros = @{
+$OldMacros = @{
     '%AdminTools%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs\Administrative Tools'
     '%AppData%' = 'C:\Documents and Settings\<user_name>\Application Data'
     '%CDBurn Area%' = 'C:\Documents and Settings\<user_name>\Local Settings\Application Data\Microsoft\CD Burning'
@@ -49,7 +59,6 @@ $Macros = @{
     '%Desktop%' = 'C:\Documents and Settings\<user_name>\Desktop'
     # Drive prefixes omitted, see Get-DrivePrefix
     '%Favorites%' = 'C:\Documents and Settings\<user_name>\Favorites'
-    '%Fonts%' = 'C:\Windows\Fonts'
     '%History%' = 'C:\Documents and Settings\<user_name>\Local Settings\History'
     '%Internet Cache%' = 'C:\Documents and Settings\<user_name>\Local Settings\Temporary Internet Files'
     '%Local AppData%' = 'C:\Documents and Settings\<user_name>\Local Settings\Application Data'
@@ -60,18 +69,56 @@ $Macros = @{
     '%PrintHood%' = 'C:\Documents and Settings\<user_name>\PrintHood'
     '%Profile%' = 'C:\Documents and Settings\<user_name>'
     '%Profiles%' = 'C:\Documents and Settings'
-    '%Program Files Common%' = 'C:\Program Files\Common Files'
-    # %ProgramFilesDir% is set manually below
     '%Programs%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs'
     '%Recent%' = 'C:\Documents and Settings\<user_name>\My Recent Documents'
-    '%Resources%' = 'C:\Windows\Resources'
-    '%Resources Localized%' = ('C:\Windows\Resources\' + (Get-Culture).LCID) # TODO: Confirm?
     '%SendTo%' = 'C:\Documents and Settings\<user_name>\SendTo'
     '%Startup%' = 'C:\Documents and Settings\<user_name>\Start Menu\Programs\Startup'
-    '%SystemRoot%' = 'C:\Windows'
-    '%SystemSystem%' = 'C:\Windows\System32'
     '%TEMP%' = 'C:\Documents and Settings\<user_name>\Local Settings\Temp'
     '%Templates%' = 'C:\Documents and Settings\<user_name>\Templates'
+}
+
+
+# https://blogs.vmware.com/thinapp/2012/05/macro-folder-locations-and-newer-versions-of-windows.html
+$NewMacros = @{
+    '%AdminTools%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Administrative Tools'
+    '%AppData%' = 'C:\Users\<user_name>\AppData\Roaming'
+    '%CDBurn Area%' = 'C:\Users\<user_name>\AppData\Local\Microsoft\Windows\Burn'
+    '%Common AdminTools%' = 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Administrative Tools'
+    '%Common AppData%' = 'C:\ProgramData'
+    '%Common Desktop%' = 'C:\Users\Public\Desktop'
+    '%Common Documents%' = 'C:\Users\Public\Documents'
+    # '%Common Favorites%' = ..?
+    '%Common Programs%' = 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs'
+    '%Common StartMenu%' = 'C:\ProgramData\Microsoft\Windows\Start Menu'
+    '%Common Startup%' = 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup'
+    '%Common Templates%' = 'C:\ProgramData\Microsoft\Windows\Templates'
+    '%Cookies%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\Cookies'
+    '%Desktop%' = 'C:\Users\<user_name>\Desktop'
+    '%Favorites%' = 'C:\Users\<user_name>\Favorites'
+    '%History%' = 'C:\Users\<user_name>\AppData\Local\Microsoft\Windows\History'
+    '%Internet Cache%' = 'C:\Users\<user_name>\AppData\Local\Microsoft\Windows\Temporary Internet Files'
+    '%Local AppData%' = 'C:\Users\<user_name>\AppData\Local'
+    # '%My Pictures%' = ..?
+    # '%My Videos%' = ..?
+    '%NetHood%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\Network Shortcuts'
+    '%Personal%' = 'C:\Users\<user_name>\Documents'
+    '%PrintHood%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\Printer Shortcuts'
+    '%Profile%' = 'C:\Users\<user_name>'
+    '%Profiles%' = 'C:\Users'
+    '%Programs%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs'
+    '%Recent%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\Recent'
+    '%SendTo%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\SendTo'
+    '%Startup%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
+    # Is %SystemSystem%' ever C:\Windows\SysWOW64?
+    '%TEMP%' = 'C:\Users\<user_name>\AppData\Local\Temp'
+    '%Templates%' = 'C:\Users\<user_name>\AppData\Roaming\Microsoft\Windows\Templates'
+}
+
+# https://stackoverflow.com/questions/7330187/how-to-find-the-windows-version-from-the-powershell-command-line
+$Macros = if ([Environment]::OSVersion.Version -ge (new-object 'Version' 6,1)) {
+    $SharedMacros + $NewMacros
+} else {
+    $SharedMacros + $OldMacros
 }
 
 # For effeciency, replace <user_name> with the actual username here
@@ -89,8 +136,10 @@ foreach ($key in $($Macros.Keys)) {
 #
 # It doesn't seem to matter if the application is 32-bit or 64-bit!
 if ([Environment]::Is64BitOperatingSystem) {
+    $Macros['%Program Files Common%'] = 'C:\Program Files (x86)\Common Files'
     $Macros['%ProgramFilesDir%'] = 'C:\Program Files (x86)'
 } else {
+    $Macros['%Program Files Common%'] = 'C:\Program Files\Common Files'
     $Macros['%ProgramFilesDir%'] = 'C:\Program Files'
 }
 
