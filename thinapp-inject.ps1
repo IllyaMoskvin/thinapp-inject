@@ -36,23 +36,23 @@ $Files | ForEach-Object {
     if (Test-Path $_) {
         # TODO: Test for file in use?
         Remove-Item -Path $_
-        Write-Host 'Removed file:' $_
+        Write-Output ('Removed file: ' + $_)
     } else {
-        Write-Host 'Nothing to remove:' $_
+        Write-Output ('Nothing to remove: ' + $_)
     }
 }
 
 # Remove the tmp directory if it exists
 if (Test-Path $DirTemp) {
     Remove-Item -Recurse -Force -Path $DirTemp
-    Write-Host 'Removed directory:' $DirTemp
+    Write-Output ('Removed directory: ' + $DirTemp)
 }
 
 # Create temporary directories, if they don't exist yet
 @(($DirTemp), ($DirNew), ($DirOld)) | ForEach-Object {
     if (!(Test-Path -PathType Container $_)) {
         New-Item -ItemType Directory -Force -Path $_ | Out-Null
-        Write-Host 'Created directory:' $_
+        Write-Output ('Created directory: ' + $_)
     }
 }
 
@@ -73,7 +73,7 @@ if (Test-Path $DirTemp) {
     # Little-endian UTF-16 Unicode text, with CRLF, CR line terminators
     $value | Out-File -FilePath $fpath -Encoding Unicode -Force
 
-    Write-Host 'Created file:' $fpath
+    Write-Output ('Created file: ' + $fpath)
 }
 
 # Copy the original tvr to tmp/old.tvr
@@ -245,7 +245,7 @@ Copy-Item -Path $TvrOld -Destination $TvrOriginal
 @(($DirSand), ($DirTemp), ($DirNew), ($DirOld), ([System.IO.path]::GetPathRoot($DirRoot))) | ForEach-Object {
     $fpath = Join-Path $_ -ChildPath 'Package.ini'
     Remove-Item -Path $fpath
-    Write-Host 'Removed file:' $fpath
+    Write-Output ('Removed file: ' + $fpath)
 }
 
 # Remove the temp directory
