@@ -1,3 +1,7 @@
+param (
+    [switch]$NoBackup
+)
+
 $DirRoot = $PSScriptRoot
 $DirTemp = Join-Path $DirRoot -ChildPath 'tmp'
 
@@ -256,14 +260,17 @@ $DataNew | Out-File -FilePath $TxtNew -Encoding Unicode -Force
 #
 & $BinVregtool "$TvrOld" 'ImportDir' "$DirNew"
 
-# Backup and replace the current tvr file
-$i = 0
-do {
-    $TvrBackup = $TvrBackupTemplate + $i
-    $i++
-} until (!(Test-Path $TvrBackup))
+# Backup the current tvr file
+if (!$NoBackup) {
+    $i = 0
+    do {
+        $TvrBackup = $TvrBackupTemplate + $i
+        $i++
+    } until (!(Test-Path $TvrBackup))
 
-Copy-Item -Path $TvrOriginal -Destination $TvrBackup
+    Copy-Item -Path $TvrOriginal -Destination $TvrBackup
+}
+
 Copy-Item -Path $TvrOld -Destination $TvrOriginal
 
 # Cleanup all the Package.ini we created...
