@@ -61,6 +61,18 @@ function Reset-Directory ([string]$Path) {
 }
 
 
+function Get-PackageIniPath {
+    @(
+        ($DirSand),
+        ($DirTemp),
+        ($DirNew),
+        ($DirOld),
+        ([System.IO.path]::GetPathRoot($DirRoot))
+    ) | ForEach-Object {
+        Join-Path $_ -ChildPath 'Package.ini'
+    }
+}
+
 # Remove the tmp directory if it exists
 Reset-Directory $DirTemp
 
@@ -91,17 +103,17 @@ Reset-Directory $DirTemp
 # 54 00 68 00 69 00 6E 00 41 00 70 00 70 00 56 00 65 00 72 00 73 00 69 00 6F 00 6E 00 00 00
 # ...then read until the next 00 00
 # foobar.exe -thinstallversion
-@(($DirSand), ($DirTemp), ($DirNew), ($DirOld), ([System.IO.path]::GetPathRoot($DirRoot))) | ForEach-Object {
-    $fpath = Join-Path $_ -ChildPath 'Package.ini'
+Get-PackageIniPath | ForEach-Object {
+
     $value = @(
         ('[BuildOptions]')
         ('CapturedUsingVersion=5.2.1-3655846')
     )
 
     # Little-endian UTF-16 Unicode text, with CRLF, CR line terminators
-    $value | Out-File -FilePath $fpath -Encoding Unicode -Force
+    $value | Out-File -FilePath $_ -Encoding Unicode -Force
 
-    Write-Output ('Created file: ' + $fpath)
+    Write-Output ('Created file: ' + $_)
 }
 
 # Copy the original tvr to tmp/old.tvr
@@ -262,10 +274,9 @@ Copy-Item -Path $TvrOriginal -Destination $TvrBackup
 Copy-Item -Path $TvrOld -Destination $TvrOriginal
 
 # Cleanup all the Package.ini we created...
-@(($DirSand), ($DirTemp), ($DirNew), ($DirOld), ([System.IO.path]::GetPathRoot($DirRoot))) | ForEach-Object {
-    $fpath = Join-Path $_ -ChildPath 'Package.ini'
-    Remove-File -Path $fpath
-    Write-Output ('Removed file: ' + $fpath)
+Get-PackageIniPath | ForEach-Object {
+    Remove-File -Path $_
+    Write-Output ('Removed file: ' + $_)
 }
 
 # Remove the temp directory
