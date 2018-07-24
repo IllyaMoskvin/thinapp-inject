@@ -26,6 +26,12 @@ This tool is a generalized, one-off experiment. I do not use ThinApp for my curr
 
 
 
+## License
+
+This codebase is released under the [MIT License](License.txt). ThinApp is copyrighted by VMware. My intent in releasing this tool is to contribute to its ecosystem and give back to its community. IANAL, but I do not think it constitutes a [derivative work](https://www.rosenlaw.com/lj19.htm), since all it does is automate calls to documented tools shipped with ThinApp. However, if you are a VMware representative, and you'd like this repository removed from GitHub, please [contact me](mailto:ivmoskvin@gmail.com), and I'd be happy to do so.
+
+
+
 ## References
 
 * [ThinApp 5.1 Package.ini Parameters Reference Guide](https://www.vmware.com/pdf/thinapp51_packageini_reference.pdf#page=85)
