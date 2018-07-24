@@ -61,6 +61,17 @@ function Reset-Directory ([string]$Path) {
 }
 
 
+# Remove the tmp directory if it exists
+Reset-Directory $DirTemp
+
+# Create temporary directories, if they don't exist yet
+@(($DirTemp), ($DirNew), ($DirOld)) | ForEach-Object {
+    if (!(Test-Path -PathType Container $_)) {
+        New-Item -ItemType Directory -Force -Path $_ | Out-Null
+        Write-Output ('Created directory: ' + $_)
+    }
+}
+
 # Delete these files to avoid "Corruption detected" errors
 # I think these are triggered by .transact specifically
 # See `DisableTransactionRegistry` in Package.ini
@@ -71,17 +82,6 @@ function Reset-Directory ([string]$Path) {
     (Join-Path $DirSand -ChildPath 'Registry.tlog.cache')
 ) | ForEach-Object {
     Remove-File $_
-}
-
-# Remove the tmp directory if it exists
-Reset-Directory $DirTemp
-
-# Create temporary directories, if they don't exist yet
-@(($DirTemp), ($DirNew), ($DirOld)) | ForEach-Object {
-    if (!(Test-Path -PathType Container $_)) {
-        New-Item -ItemType Directory -Force -Path $_ | Out-Null
-        Write-Output ('Created directory: ' + $_)
-    }
 }
 
 # Create Package.ini in directories we'll be processing
@@ -151,12 +151,10 @@ $DataNew = $DataNew | ForEach-Object { $i = 0 } {
 
     if ($_.StartsWith('  REG_BINARY=')) {
 
-        # trims everything after col 122
-        # This may contain checksum info, etc.
+        # trims everything after col 122 - checksum info?
         $_ = $_.SubString(0,121)
 
-        # replaces #00 w/ #01
-        # This may indicate whether the file came from a sandbox
+        # replaces #00 w/ #01 - origin is sandbox?
         [char[]]$char = $_
         $char[15] = '1'
         $_ = [string]::new($char)
