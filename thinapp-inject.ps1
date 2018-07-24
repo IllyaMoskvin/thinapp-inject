@@ -40,6 +40,18 @@ function Remove-File ([string]$Path) {
 }
 
 
+function Reset-Directory ([string]$Path) {
+    try {
+        if (Test-Path $Path -ErrorAction Stop) {
+            Remove-Item -Recurse -Force -Path $Path -ErrorAction Stop
+            Write-Output ('Removed directory: ' + $Path)
+        }
+    } catch {
+        throw ('Cannot reset directory. Ensure its files are not in use: ' + $Path)
+    }
+}
+
+
 # Delete these files to avoid "Corruption detected" errors
 # I think these are triggered by .transact specifically
 # See `DisableTransactionRegistry` in Package.ini
@@ -53,10 +65,7 @@ function Remove-File ([string]$Path) {
 }
 
 # Remove the tmp directory if it exists
-if (Test-Path $DirTemp) {
-    Remove-Item -Recurse -Force -Path $DirTemp
-    Write-Output ('Removed directory: ' + $DirTemp)
-}
+Reset-Directory $DirTemp
 
 # Create temporary directories, if they don't exist yet
 @(($DirTemp), ($DirNew), ($DirOld)) | ForEach-Object {
@@ -259,4 +268,4 @@ Copy-Item -Path $TvrOld -Destination $TvrOriginal
 }
 
 # Remove the temp directory
-Remove-Item -Recurse -Force -Path $DirTemp
+Reset-Directory $DirTemp
