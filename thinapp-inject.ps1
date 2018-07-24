@@ -117,9 +117,8 @@ $TxtNew = Join-Path $DirNew -ChildPath 'HKEY_LOCAL_MACHINE.txt'
 
 # Read the generated HKEY_LOCAL_MACHINE.txt into arrays
 # Note that these files are UTF-16 w/ BOM (LE)
-# TODO: Check if this file exists?
-$DataOld = Get-Content -Path $TxtOld
-$DataNew = Get-Content -Path $TxtNew
+$DataOld = Get-Content -Path $TxtOld -ErrorAction Stop
+$DataNew = Get-Content -Path $TxtNew -ErrorAction Stop
 
 $DataNew = $DataNew | ForEach-Object { $i = 0 } {
 
