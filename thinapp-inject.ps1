@@ -22,8 +22,10 @@ $TvrBackupTemplate = Join-Path $DirSand -ChildPath 'Registry.rw.tvr.bak'
 $TvrOld = Join-Path $DirTemp -ChildPath 'old.tvr'
 $TvrNew = Join-Path $DirTemp -ChildPath 'new.tvr'
 
-# TODO: Check that the sandbox path exists
-# TODO: Check that [sandbox]\Package.ini exists..?
+# Ensure that the sandbox path exists
+if (!(Test-Path $DirSand)) {
+    throw ('Sandbox path does not exist: ' + $DirSand)
+}
 
 # https://stackoverflow.com/questions/24992681/powershell-check-if-a-file-is-locked
 function Remove-File ([string]$Path) {
