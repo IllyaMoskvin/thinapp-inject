@@ -35,28 +35,21 @@ if (!(Test-Path $DirSand)) {
 }
 
 # https://stackoverflow.com/questions/24992681/powershell-check-if-a-file-is-locked
-function Remove-File ([string]$Path) {
+function Reset-Item ([string]$Path, [switch]$Directory) {
     try {
         if (Test-Path $Path -ErrorAction Stop) {
-            Remove-Item -Path $Path -ErrorAction Stop
-            Write-Output ('Removed file: ' + $Path)
+            if ($Directory) {
+                Remove-Item -Path $Path -ErrorAction Stop -Recurse -Force
+                Write-Output ('Removed directory: ' + $Path)
+            } else {
+                Remove-Item -Path $Path -ErrorAction Stop
+                Write-Output ('Removed file: ' + $Path)
+            }
         } else {
             Write-Output ('Nothing to remove: ' + $Path)
         }
     } catch {
-        throw ('Cannot remove file. Ensure it is not in use: ' + $Path)
-    }
-}
-
-
-function Reset-Directory ([string]$Path) {
-    try {
-        if (Test-Path $Path -ErrorAction Stop) {
-            Remove-Item -Recurse -Force -Path $Path -ErrorAction Stop
-            Write-Output ('Removed directory: ' + $Path)
-        }
-    } catch {
-        throw ('Cannot reset directory. Ensure its files are not in use: ' + $Path)
+        throw ('Cannot remove item. Ensure it is not in use: ' + $Path)
     }
 }
 
@@ -73,8 +66,8 @@ function Get-PackageIniPath {
     }
 }
 
-# Remove the tmp directory if it exists
-Reset-Directory $DirTemp
+
+Reset-Item $DirTemp -Directory
 
 # Create temporary directories, if they don't exist yet
 @(($DirTemp), ($DirNew), ($DirOld)) | ForEach-Object {
@@ -93,7 +86,7 @@ Reset-Directory $DirTemp
     (Join-Path $DirSand -ChildPath 'Registry.tlog')
     (Join-Path $DirSand -ChildPath 'Registry.tlog.cache')
 ) | ForEach-Object {
-    Remove-File $_
+    Reset-Item $_
 }
 
 # Create Package.ini in directories we'll be processing
@@ -275,9 +268,8 @@ Copy-Item -Path $TvrOld -Destination $TvrOriginal
 
 # Cleanup all the Package.ini we created...
 Get-PackageIniPath | ForEach-Object {
-    Remove-File -Path $_
-    Write-Output ('Removed file: ' + $_)
+    Remove-Item -Path $_
 }
 
-# Remove the temp directory
-Reset-Directory $DirTemp
+
+Reset-Item $DirTemp -Directory
