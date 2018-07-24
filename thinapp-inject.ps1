@@ -22,24 +22,34 @@ $TvrBackupTemplate = Join-Path $DirSand -ChildPath 'Registry.rw.tvr.bak'
 $TvrOld = Join-Path $DirTemp -ChildPath 'old.tvr'
 $TvrNew = Join-Path $DirTemp -ChildPath 'new.tvr'
 
+# TODO: Check that the sandbox path exists
+# TODO: Check that [sandbox]\Package.ini exists..?
+
+# https://stackoverflow.com/questions/24992681/powershell-check-if-a-file-is-locked
+function Remove-File ([string]$Path) {
+    try {
+        if (Test-Path $Path -ErrorAction Stop) {
+            Remove-Item -Path $Path -ErrorAction Stop
+            Write-Output ('Removed file: ' + $Path)
+        } else {
+            Write-Output ('Nothing to remove: ' + $Path)
+        }
+    } catch {
+        throw ('Cannot remove file. Ensure it is not in use: ' + $Path)
+    }
+}
+
+
 # Delete these files to avoid "Corruption detected" errors
 # I think these are triggered by .transact specifically
 # See `DisableTransactionRegistry` in Package.ini
-$Files = @(
+@(
     (Join-Path $DirSand -ChildPath 'Registry.rw.tvr.lck')
     (Join-Path $DirSand -ChildPath 'Registry.rw.tvr.transact')
     (Join-Path $DirSand -ChildPath 'Registry.tlog')
     (Join-Path $DirSand -ChildPath 'Registry.tlog.cache')
-)
-
-$Files | ForEach-Object {
-    if (Test-Path $_) {
-        # TODO: Test for file in use?
-        Remove-Item -Path $_
-        Write-Output ('Removed file: ' + $_)
-    } else {
-        Write-Output ('Nothing to remove: ' + $_)
-    }
+) | ForEach-Object {
+    Remove-File $_
 }
 
 # Remove the tmp directory if it exists
@@ -244,7 +254,7 @@ Copy-Item -Path $TvrOld -Destination $TvrOriginal
 # Cleanup all the Package.ini we created...
 @(($DirSand), ($DirTemp), ($DirNew), ($DirOld), ([System.IO.path]::GetPathRoot($DirRoot))) | ForEach-Object {
     $fpath = Join-Path $_ -ChildPath 'Package.ini'
-    Remove-Item -Path $fpath
+    Remove-File -Path $fpath
     Write-Output ('Removed file: ' + $fpath)
 }
 
