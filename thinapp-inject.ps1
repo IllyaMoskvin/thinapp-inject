@@ -86,6 +86,14 @@ function Get-PackageIni {
 }
 
 
+# Write *ThinApp-friendly* file. All text files handled by ThinApp:
+# Little-endian UTF-16 Unicode text, with CRLF, CR line terminators
+function Write-File ([string]$Path, [string[]]$Value) {
+    $Value | Out-File -FilePath $Path -Encoding Unicode -Force
+    Write-Output ('Created file: ' + $Path)
+}
+
+
 # Reset our temporary directory
 Reset-Item $DirTemp -Directory
 
@@ -112,11 +120,7 @@ Reset-Item $DirTemp -Directory
 
 # Create Package.ini in directories we'll be processing
 Get-PackageIniPath | ForEach-Object {
-
-    # Little-endian UTF-16 Unicode text, with CRLF, CR line terminators
-    Get-PackageIni | Out-File -FilePath $_ -Encoding Unicode -Force
-
-    Write-Output ('Created file: ' + $_)
+    Write-File -Path $_ -Value (Get-PackageIni)
 }
 
 # Copy the original tvr to tmp/old.tvr
@@ -258,7 +262,7 @@ for ($i = $DataNew.Length; $i -gt 0; $i--) {
 $DataNew += ''
 
 # Write the edited data to the reg file
-$DataNew | Out-File -FilePath $TxtNew -Encoding Unicode -Force
+Write-File -Path $TxtNew -Value $DataNew
 
 # Remove all filesystem data from the old tvr
 & $BinVregtool "$TvrOld" 'DelSubkey' "$KeyBase" "-NoMark"
