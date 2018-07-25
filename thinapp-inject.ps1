@@ -2,6 +2,7 @@ param (
     [switch]$NoBackup
 )
 
+# Define some paths for convenience
 $DirRoot = $PSScriptRoot
 $DirTemp = Join-Path $DirRoot -ChildPath 'tmp'
 
@@ -58,12 +59,14 @@ function Reset-Item ([string]$Path, [switch]$Directory) {
 }
 
 
+# Required by vftool and vregtool:
+# Missing required parameter CapturedUsingVersion in section [BuildOptions] for [..]\Package.ini
 function Get-PackageIniPath {
     @(
         ($DirSand),
-        ($DirTemp),
         ($DirNew),
         ($DirOld),
+        # ListFiles requires one in root..?
         ([System.IO.path]::GetPathRoot($DirRoot))
     ) | ForEach-Object {
         Join-Path $_ -ChildPath 'Package.ini'
@@ -71,6 +74,7 @@ function Get-PackageIniPath {
 }
 
 
+# Reset our temporary directory
 Reset-Item $DirTemp -Directory
 
 # Create temporary directories, if they don't exist yet
@@ -257,7 +261,7 @@ $DataNew | Out-File -FilePath $TxtNew -Encoding Unicode -Force
 # Remove all filesystem data from the old tvr
 & $BinVregtool "$TvrOld" 'DelSubkey' "$KeyBase" "-NoMark"
 
-#
+# Import new registry text file into old tvr
 & $BinVregtool "$TvrOld" 'ImportDir' "$DirNew"
 
 # Backup the current tvr file
@@ -271,6 +275,7 @@ if (!$NoBackup) {
     Copy-Item -Path $TvrOriginal -Destination $TvrBackup
 }
 
+# Replace the current tvr file
 Copy-Item -Path $TvrOld -Destination $TvrOriginal
 
 # Cleanup all the Package.ini we created...
@@ -278,5 +283,5 @@ Get-PackageIniPath | ForEach-Object {
     Remove-Item -Path $_
 }
 
-
+# Reset our temporary directory
 Reset-Item $DirTemp -Directory
