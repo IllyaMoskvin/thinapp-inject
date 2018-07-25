@@ -45,13 +45,9 @@ function Reset-Item ([string]$Path, [switch]$Directory) {
         if (Test-Path $Path -ErrorAction Stop) {
             if ($Directory) {
                 Remove-Item -Path $Path -ErrorAction Stop -Recurse -Force
-                Write-Output ('Removed directory: ' + $Path)
             } else {
                 Remove-Item -Path $Path -ErrorAction Stop
-                Write-Output ('Removed file: ' + $Path)
             }
-        } else {
-            Write-Output ('Nothing to remove: ' + $Path)
         }
     } catch {
         throw ('Cannot remove item. Ensure it is not in use: ' + $Path)
@@ -90,7 +86,6 @@ function Get-PackageIni {
 # Little-endian UTF-16 Unicode text, with CRLF, CR line terminators
 function Write-File ([string]$Path, [string[]]$Value) {
     $Value | Out-File -FilePath $Path -Encoding Unicode -Force
-    Write-Output ('Created file: ' + $Path)
 }
 
 
@@ -101,7 +96,6 @@ Reset-Item $DirTemp -Directory
 @(($DirTemp), ($DirNew), ($DirOld)) | ForEach-Object {
     if (!(Test-Path -PathType Container $_)) {
         New-Item -ItemType Directory -Force -Path $_ | Out-Null
-        Write-Output ('Created directory: ' + $_)
     }
 }
 
