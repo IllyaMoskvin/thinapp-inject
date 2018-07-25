@@ -74,6 +74,18 @@ function Get-PackageIniPath {
 }
 
 
+# TODO: Make the version configurable, or extract it from the application..?
+# 54 00 68 00 69 00 6E 00 41 00 70 00 70 00 56 00 65 00 72 00 73 00 69 00 6F 00 6E 00 00 00
+# ...then read until the next 00 00
+# foobar.exe -thinstallversion
+function Get-PackageIni {
+    @(
+        ('[BuildOptions]')
+        ('CapturedUsingVersion=5.2.1-3655846')
+    )
+}
+
+
 # Reset our temporary directory
 Reset-Item $DirTemp -Directory
 
@@ -97,22 +109,12 @@ Reset-Item $DirTemp -Directory
     Reset-Item $_
 }
 
+
 # Create Package.ini in directories we'll be processing
-# Required by vftool and vregtool
-# We need to put one in root for ListFiles to work..?
-# TODO: Make the version configurable, or extract it from the application..?
-# 54 00 68 00 69 00 6E 00 41 00 70 00 70 00 56 00 65 00 72 00 73 00 69 00 6F 00 6E 00 00 00
-# ...then read until the next 00 00
-# foobar.exe -thinstallversion
 Get-PackageIniPath | ForEach-Object {
 
-    $value = @(
-        ('[BuildOptions]')
-        ('CapturedUsingVersion=5.2.1-3655846')
-    )
-
     # Little-endian UTF-16 Unicode text, with CRLF, CR line terminators
-    $value | Out-File -FilePath $_ -Encoding Unicode -Force
+    Get-PackageIni | Out-File -FilePath $_ -Encoding Unicode -Force
 
     Write-Output ('Created file: ' + $_)
 }
