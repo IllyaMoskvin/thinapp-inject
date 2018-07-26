@@ -31,7 +31,7 @@ $DirBin = Join-Path $DirRoot -ChildPath 'bin'
 $BinVregtool = Join-Path $DirBin -ChildPath 'vregtool.exe'
 
 # Set the envar required by build.bat and thinapp-inject.ps1
-# TODO: Save current envar, and restore it at end of script?
+$OldEnvThinstallBin = $env:THINSTALL_BIN
 $env:THINSTALL_BIN = $DirBin
 
 
@@ -485,6 +485,8 @@ if (!($Save -or $SaveRegistry)) {
 if (!($Save -or $SaveBuild)) {
     Uninstall-Build
 }
+
+$env:THINSTALL_BIN = $OldEnvThinstallBin
 
 # Ensure that creating a file via injection results in...
 #   ...the entry point seeing the file
