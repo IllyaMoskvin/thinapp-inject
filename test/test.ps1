@@ -1,12 +1,29 @@
 param (
+    # Path to directory with vregtool.exe and vftool.exe
+    [string]$ThinAppPath,
+
+    # Don't delete ..\tmp folder in root
+    [switch]$KeepTemp,
+
+    # Compare virtual registry of injected vs. touched through entrypoint
     [switch]$TestRegistry,
+
+    # Save virtual registry text files to test\registry
     [switch]$SaveRegistry,
+
+    # Don't delete the test\build directory
     [switch]$SaveBuild,
+
+    # Synonymous to both SaveRegistry and SaveBuild
     [switch]$Save,
+
+    # Test suite to execute, e.g. 'Full' for Get-FullTest
     [string]$Test
 )
 
-$DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
+Import-Module "$PSScriptRoot\..\thinapp-shared.psm1"
+
+$DirRoot = Get-NormalizedPath (Join-Path $PSScriptRoot -ChildPath '../')
 $DirTemp = Join-Path $DirRoot -ChildPath 'tmp'
 
 $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
@@ -23,11 +40,12 @@ $BinScript = Join-Path $DirRoot -ChildPath 'thinapp-inject.ps1'
 
 $TvrSandbox = Join-Path $DirSandbox -ChildPath 'Registry.rw.tvr'
 
-# TODO: Make these configurable
-$DirBin = Join-Path $DirRoot -ChildPath 'bin'
+$DirBin = Get-DirBin $ThinAppPath $DirSandbox
+
 $BinVregtool = Join-Path $DirBin -ChildPath 'vregtool.exe'
 
-# Set the envar required by build.bat
+# Set the envar required by build.bat and thinapp-inject.ps1
+$OldEnvThinstallBin = $env:THINSTALL_BIN
 $env:THINSTALL_BIN = $DirBin
 
 
@@ -254,9 +272,10 @@ function Uninstall-Build {
 }
 
 
-# Runs the inject script
+# Runs the inject script. Uses THINSTALL_BIN envar.
+# Specifying `Version` to match test Package.ini
 function Invoke-Injector {
-    & $BinScript | Out-Null
+    & $BinScript -SandboxPath "$DirSandbox" -Version '5.2.3-6945559' -KeepTemp:$KeepTemp -Verbose:$Verbose | Out-Null
 }
 
 
@@ -480,6 +499,8 @@ if (!($Save -or $SaveRegistry)) {
 if (!($Save -or $SaveBuild)) {
     Uninstall-Build
 }
+
+$env:THINSTALL_BIN = $OldEnvThinstallBin
 
 # Ensure that creating a file via injection results in...
 #   ...the entry point seeing the file
