@@ -174,7 +174,6 @@ Reset-Item $DirTemp -Directory
     Reset-Item $_
 }
 
-
 # Create Package.ini in directories we'll be processing
 Get-PackageIniPath | ForEach-Object {
     Write-File -Path $_ -Value (Get-PackageIni)
@@ -198,6 +197,7 @@ Copy-Item -Path $TvrOriginal -Destination $TvrOld
 $DataOld = Get-Content -Path $TxtOld -ErrorAction Stop
 $DataNew = Get-Content -Path $TxtNew -ErrorAction Stop
 
+# TODO: Make this less imperative? Might be over-engineering.
 $DataNew = $DataNew | ForEach-Object { $i = 0 } {
 
     # We reached the start of a new entry, so let's do a look-ahead
@@ -242,7 +242,8 @@ $DataNew = $DataNew | ForEach-Object { $i = 0 } {
     $_
 }
 
-# Do some more steps to cleanup ThinApp cruft...
+# Remove auto-injected references to ThinstallPlugins
+# These are already included in the virtualized application
 $i = [array]::IndexOf($DataNew, 'isolation_writecopy HKEY_LOCAL_MACHINE\FS\%ProgramFilesDir%')
 
 if ($i -gt -1) {
@@ -296,7 +297,7 @@ for ($i=0; $i -lt $DataNew.Length; $i++) {
         if (!($isInOld -eq $null)) {
             $j = [array]::IndexOf($DataOld, $isInOld)
             if ($DataOld[($j+1)].Length -eq 0) {
-                if ( $DataNew[($i+2)] -eq '  REG_BINARY=#01#00#00#00#01#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00#00') {
+                if ( $DataNew[($i+2)] -eq ('  REG_BINARY=#01' + ('#00' * 35)) ) {
                     $i++
                     $i++
                 }
