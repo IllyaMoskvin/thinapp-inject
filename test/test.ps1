@@ -5,6 +5,9 @@ param (
     # Don't delete ..\tmp folder in root
     [switch]$KeepTemp,
 
+    # Generate `build`, fill the sandbox, but don't actually run the injector
+    [switch]$NoInject,
+
     # Compare virtual registry of injected vs. touched through entrypoint
     [switch]$TestRegistry,
 
@@ -346,7 +349,9 @@ function Test-SandboxItem ([array]$Item, [boolean]$TestRegistry) {
         Invoke-Expression ('Add-Sandbox' + $_.Type + ' "' + $_.Path + '"')
     }
 
-    Invoke-Injector
+    if (!$NoInject) {
+        Invoke-Injector
+    }
 
     $Item | ForEach-Object {
         $_.Pass = Test-ItemExists $_.Path
