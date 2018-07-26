@@ -2,6 +2,9 @@ param (
     [Parameter(Mandatory=$true)]
     [string]$SandboxPath,
 
+    # ThinApp version used to capture the app (CapturedUsingVersion)
+    [string]$Version,
+
     # We can attempt to recover if this is omitted
     [string]$ThinAppPath,
 
@@ -104,14 +107,26 @@ function Get-PackageIniPath {
 }
 
 
-# TODO: Make the version configurable, or extract it from the application..?
+# Get ThinApp version with which the application was captured from param.
+# TODO: Defaulting version generically (5 vs. 5.x.x) seems to work fine. Confirm?
+# TODO: Attempt to extract it from the application..? But we don't know its location.
 # 54 00 68 00 69 00 6E 00 41 00 70 00 70 00 56 00 65 00 72 00 73 00 69 00 6F 00 6E 00 00 00
 # ...then read until the next 00 00
 # foobar.exe -thinstallversion
+function Get-Version {
+    if (!$Version ) {
+        $Version = '5'
+    }
+
+    Write-Verbose "Setting `CapturedUsingVersion` to $Version"
+    $Version
+}
+
+
 function Get-PackageIni {
     @(
         ('[BuildOptions]')
-        ('CapturedUsingVersion=5.2.1-3655846')
+        ('CapturedUsingVersion=' + $Version)
     )
 }
 
@@ -126,6 +141,8 @@ function Write-File ([string]$Path, [string[]]$Value) {
 # Normalize params to our script's conventions
 $DirSand = Get-DirSand $SandboxPath
 $DirBin = Get-DirBin $ThinAppPath
+
+$Version = Get-Version $Version
 
 # Define some other paths for convenience
 $DirRoot = $PSScriptRoot

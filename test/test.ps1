@@ -259,8 +259,9 @@ function Uninstall-Build {
 
 
 # Runs the inject script. Uses THINSTALL_BIN envar.
+# Specifying `Version` to match test Package.ini
 function Invoke-Injector {
-    & $BinScript -SandboxPath "$DirSandbox" -KeepTemp:$KeepTemp -Verbose:$Verbose | Out-Null
+    & $BinScript -SandboxPath "$DirSandbox" -Version '5.2.3-6945559' -KeepTemp:$KeepTemp -Verbose:$Verbose | Out-Null
 }
 
 
