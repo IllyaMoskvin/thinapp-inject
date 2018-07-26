@@ -23,11 +23,14 @@ $BinScript = Join-Path $DirRoot -ChildPath 'thinapp-inject.ps1'
 
 $TvrSandbox = Join-Path $DirSandbox -ChildPath 'Registry.rw.tvr'
 
-# TODO: Make these configurable
+# TODO: Make this configurable?
+# TODO: Share $DirBin resolution logic w/ thinapp-inject.ps1?
 $DirBin = Join-Path $DirRoot -ChildPath 'bin'
+
 $BinVregtool = Join-Path $DirBin -ChildPath 'vregtool.exe'
 
-# Set the envar required by build.bat
+# Set the envar required by build.bat and thinapp-inject.ps1
+# TODO: Save current envar, and restore it at end of script?
 $env:THINSTALL_BIN = $DirBin
 
 
@@ -254,9 +257,9 @@ function Uninstall-Build {
 }
 
 
-# Runs the inject script
+# Runs the inject script. Uses THINSTALL_BIN envar.
 function Invoke-Injector {
-    & $BinScript | Out-Null
+    & $BinScript -SandboxPath "$DirSandbox" | Out-Null
 }
 
 
