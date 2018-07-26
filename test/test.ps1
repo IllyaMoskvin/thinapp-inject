@@ -1,10 +1,23 @@
 param (
+    # Path to directory with vregtool.exe and vftool.exe
     [string]$ThinAppPath,
+
+    # Don't delete ..\tmp folder in root
     [switch]$KeepTemp,
+
+    # Compare virtual registry of injected vs. touched through entrypoint
     [switch]$TestRegistry,
+
+    # Save virtual registry text files to test\registry
     [switch]$SaveRegistry,
+
+    # Don't delete the test\build directory
     [switch]$SaveBuild,
+
+    # Synonymous to both SaveRegistry and SaveBuild
     [switch]$Save,
+
+    # Test suite to execute, e.g. 'Full' for Get-FullTest
     [string]$Test
 )
 
