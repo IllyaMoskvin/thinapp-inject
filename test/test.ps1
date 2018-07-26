@@ -260,7 +260,7 @@ function Uninstall-Build {
 
 # Runs the inject script. Uses THINSTALL_BIN envar.
 function Invoke-Injector {
-    & $BinScript -SandboxPath "$DirSandbox" -KeepTemp:$KeepTemp | Out-Null
+    & $BinScript -SandboxPath "$DirSandbox" -KeepTemp:$KeepTemp -Verbose:$Verbose | Out-Null
 }
 
 
