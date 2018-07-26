@@ -325,7 +325,7 @@ for ($i=0; $i -lt $DataNew.Length; $i++) {
         if (!($isInOld -eq $null)) {
             $j = [array]::IndexOf($DataOld, $isInOld)
             if ($DataOld[($j+1)].Length -eq 0) {
-                if ( $DataNew[($i+2)] -eq ('  REG_BINARY=#01' + ('#00' * 35)) ) {
+                if ( $DataNew[($i+2)] -eq ('  REG_BINARY=#01#00#00#00#01' + ('#00' * 31)) ) {
                     $i++
                     $i++
                 }
