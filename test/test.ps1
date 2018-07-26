@@ -1,4 +1,5 @@
 param (
+    [switch]$KeepTemp,
     [switch]$TestRegistry,
     [switch]$SaveRegistry,
     [switch]$SaveBuild,
@@ -259,7 +260,7 @@ function Uninstall-Build {
 
 # Runs the inject script. Uses THINSTALL_BIN envar.
 function Invoke-Injector {
-    & $BinScript -SandboxPath "$DirSandbox" | Out-Null
+    & $BinScript -SandboxPath "$DirSandbox" -KeepTemp:$KeepTemp | Out-Null
 }
 
 

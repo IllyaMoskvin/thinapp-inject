@@ -6,7 +6,10 @@ param (
     [string]$ThinAppPath,
 
     # Don't create Registry.rw.tvr.bak* files
-    [switch]$NoBackup
+    [switch]$NoBackup,
+
+    # Don't remove the tmp directory (debug)
+    [switch]$KeepTemp
 )
 
 
@@ -359,4 +362,6 @@ Get-PackageIniPath | ForEach-Object {
 }
 
 # Reset our temporary directory
-Reset-Item $DirTemp -Directory
+if (!$KeepTemp) {
+    Reset-Item $DirTemp -Directory
+}
