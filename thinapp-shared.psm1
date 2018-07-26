@@ -29,6 +29,7 @@ function Get-DirBin ([string]$ThinAppPath, [string]$DirSand) {
     if (!$dir) {
         throw 'Cannot resolve ThinApp directory. Double-check the `ThinAppPath` param.'
     } else {
+        # TODO: Figure out why this isn't writing to console, now that it's in a module?
         Write-Verbose "Using ThinApp install: $dir"
     }
 

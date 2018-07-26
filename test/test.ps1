@@ -1,4 +1,5 @@
 param (
+    [string]$ThinAppPath,
     [switch]$KeepTemp,
     [switch]$TestRegistry,
     [switch]$SaveRegistry,
@@ -7,7 +8,9 @@ param (
     [string]$Test
 )
 
-$DirRoot = Join-Path $PSScriptRoot -ChildPath '../'
+Import-Module "$PSScriptRoot\..\thinapp-shared.psm1"
+
+$DirRoot = Get-NormalizedPath (Join-Path $PSScriptRoot -ChildPath '../')
 $DirTemp = Join-Path $DirRoot -ChildPath 'tmp'
 
 $DirCapture = Join-Path $PSScriptRoot -ChildPath 'capture'
@@ -24,9 +27,7 @@ $BinScript = Join-Path $DirRoot -ChildPath 'thinapp-inject.ps1'
 
 $TvrSandbox = Join-Path $DirSandbox -ChildPath 'Registry.rw.tvr'
 
-# TODO: Make this configurable?
-# TODO: Share $DirBin resolution logic w/ thinapp-inject.ps1?
-$DirBin = Join-Path $DirRoot -ChildPath 'bin'
+$DirBin = Get-DirBin $ThinAppPath $DirSandbox
 
 $BinVregtool = Join-Path $DirBin -ChildPath 'vregtool.exe'
 
